@@ -1,7 +1,7 @@
 ### invitroSPI ###
-# description:  removal of peptides that are present in the control data set from the database
-# input:        filtered (all) PSMs
-# output:       extracted PSMs of the final database
+# description:  mapping of peptides to the substrate sequence accounting for potential multi-mappers
+# input:        extracted PSMs of the final database
+# output:       ProteasomeDB.csv
 # authors:      JL, modified by HPR
 
 library(seqinr)
