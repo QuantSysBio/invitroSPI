@@ -19,7 +19,7 @@ Briefly, open the terminal on your computer and paste the following lines sequen
 `mamba create -c conda-forge -c bioconda -n snakemake snakemake`  
 Additionally, you might need to run `conda update conda`.
 
-Download this repository as a .zip file, move the .zip file in the desired directory on your computer and unpack it.
+Download this repository as a .zip file (click on *Code* at the upper right corner of this repository --> Download ZIP), move the .zip file in the desired directory on your computer and unpack it.
 Open the terminal in this directory and enter: `conda activate snakemake`.
 
 The pipeline can be executed by pasting `snakemake --use-conda --cores all -R createMSDB` into the terminal. The progress of the pipeline execution shoul appear in your terminal window.
