@@ -1,0 +1,5 @@
+
+delta_score: 0.3
+ion_score: 20
+q_value: 0.05
+keep_synErrors: "no"

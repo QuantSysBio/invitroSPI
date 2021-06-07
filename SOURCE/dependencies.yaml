@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+  - r
+
+dependencies:
+  - r-base=4.1.0
+  - r-seqinr=4.2_5
+  - r-stringr=1.4.0
+  - r-plyr=1.8.6
