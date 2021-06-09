@@ -2,8 +2,8 @@
 Spliced peptide identification from in vitro digestions of polypeptides with purified proteasomes
 
 ## overview
-invitroSPI pipeline consists of four main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
-1. parsing of search result files and creation of a preliminary *MSDB* containing all peptide-spectrum matches (PSMs)
+The invitroSPI pipeline consists of four main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
+1. parsing of search result files and creation of a preliminary MS database (*MSDB*) containing all peptide-spectrum matches (PSMs)
 2. scoring and filtering of PSMs using Mascot's ion score and q-value as well as the delta score described in the manuscript
 3. identification and, optionally, removal of synthesis errors using the control runs
 4. mapping of peptides to the substrate sequence accounting for potential multi-mappers
@@ -13,7 +13,7 @@ invitroSPI relies on [Conda](https://docs.conda.io/en/latest/) and Snakemake.
 In order to install Conda, click on this [link](https://docs.conda.io/en/latest/miniconda.html) and follow the installation guidelines for your respective operating system.  
 After installing Conda, you need to install Snakemake. The Snakemake installation procedure is described [here](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html).
 
-Briefly, open the terminal on your computer and paste the following lines sequentally:  
+Briefly, open the terminal on your computer and paste the following lines sequentially:  
 `conda install -n base -c conda-forge mamba`  
 `conda activate base`  
 `mamba create -c conda-forge -c bioconda -n snakemake snakemake`  
@@ -22,13 +22,13 @@ Additionally, you might need to run `conda update conda`.
 Download this repository as a .zip file (click on *Code* at the upper right corner of this repository --> Download ZIP), move the .zip file in the desired directory on your computer and unpack it.
 Open the terminal in this directory and enter: `conda activate snakemake`.
 
-The pipeline can be executed by pasting `snakemake --use-conda --cores all -R createMSDB` into the terminal. The progress of the pipeline execution shoul appear in your terminal window.
+The pipeline can be executed by pasting `snakemake --use-conda --cores all -R createMSDB` into the terminal. The progress of the pipeline execution should appear in your terminal window.
 Note that upon reexecution, Snakemake will delete all previously generated output files. We therefore recommend, to rename the final *ProteasomeDB* or move it into another directory.
 
 After your jobs finished, enter `conda deactivate` in order to terminate your Conda environment.
 
 ## input
-The invitroSPI identifies spliced and non-spliced peptides from Mascot search result files. Therefore, the user must provide a table `sample_list.csv` in the `INPUT/` folder containing information about:
+invitroSPI identifies spliced and non-spliced peptides from Mascot search result files. Therefore, the user must provide a table `sample_list.csv` in the `INPUT/` folder containing information about:
 - substrate ID
 - substrate sequence
 - time point
