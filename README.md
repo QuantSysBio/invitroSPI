@@ -1,5 +1,6 @@
 # invitroSPI
 Spliced peptide identification from in vitro digestions of polypeptides with purified proteasomes
+<img src="invitroSPI.png" width="400">
 
 ## overview
 The invitroSPI pipeline consists of four main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
