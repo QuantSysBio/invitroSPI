@@ -11,6 +11,7 @@ print("------------------------------------------------")
 print("2) EXTRACT HIGH-QUALITY PSMs FROM SEARCH RESULTS")
 print("------------------------------------------------")
 
+project_name = snakemake@params[["project_name"]]
 delta_score = snakemake@params[["delta_score"]]
 ion_score = snakemake@params[["ion_score"]]
 q_value = snakemake@params[["q_value"]]
@@ -23,6 +24,9 @@ print(paste0("q-value: ", q_value))
 ### INPUT ###
 sample_list = read.csv(file = snakemake@input[["sample_list"]],
                        sep = ";", header = T, stringsAsFactors = F)
+# filter sample list
+sample_list = sample_list[sample_list$project_name == project_name, ]
+
 load(snakemake@input[["MSDB"]])
 
 

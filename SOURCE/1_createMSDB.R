@@ -10,6 +10,7 @@ print("--------------------------------------------")
 print("1) PARSE SEARCH RESULT FILES AND CREATE MSDB")
 print("--------------------------------------------")
 
+project_name = snakemake@params[["project_name"]]
 SEARCHRESULTS_PATH = "INPUT/search_results"
 
 
@@ -20,7 +21,15 @@ sample_list = read.csv(file = snakemake@input[["sample_list"]],
 # sample_list = read.table(file = "INPUT/sample_list.csv",
 #                          sep = ";", header = T, stringsAsFactors = F)
 
+# filter sample list
+sample_list = sample_list[sample_list$project_name == project_name, ]
+
 ### MAIN PART ###
+
+if (!dir.exists(paste0("OUTPUT/", project_name))) {
+  dir.create(paste0("OUTPUT/", project_name))
+}
+
 columns = c(            "runID" ,
                         "substrateID" ,
                         "substrateSeq" ,

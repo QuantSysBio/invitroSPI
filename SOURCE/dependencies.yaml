@@ -8,3 +8,4 @@ dependencies:
   - r-seqinr=4.2_5
   - r-stringr=1.4.0
   - r-plyr=1.8.6
+  - r-dplyr=1.0.7

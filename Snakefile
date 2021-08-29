@@ -18,4 +18,5 @@ include: snakefiles + "rules.py"
 
 rule all:
     input:
-        ProteasomeDB = "OUTPUT/ProteasomeDB.csv"
+        ProteasomeDB = "OUTPUT/{project_name}/ProteasomeDB.csv".format(project_name=config['project_name']),
+        DB_stats = "OUTPUT/{project_name}/DB_stats.pdf".format(project_name=config['project_name'])
