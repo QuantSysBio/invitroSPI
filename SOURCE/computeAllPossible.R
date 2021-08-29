@@ -17,8 +17,6 @@ print("-----------------------------------------------------")
 # load sample list
 sample_list = read.csv(file = "INPUT/sample_list.csv",
                        sep = ";", header = T, stringsAsFactors = F)
-substrates = sample_list[, c("substrateID", "substrateSeq")] %>%
-  unique()
 
 # load config table
 config = read.table("INPUT/config.yaml")
@@ -28,6 +26,8 @@ project_name = config[,2][which(config[,1] == "project_name:")] %>%
 # filter sample list
 sample_list = sample_list[sample_list$project_name == project_name, ]
 
+substrates = sample_list[, c("substrateID", "substrateSeq")] %>%
+  unique()
 
 ### MAIN PART ###
 # create project subdirectory
