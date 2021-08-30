@@ -8,6 +8,9 @@ The invitroSPI pipeline consists of four main steps that are implemented in a [S
 2. scoring and filtering of PSMs using Mascot's ion score and q-value as well as the delta score described in the manuscript
 3. identification and, optionally, removal of synthesis errors using the control runs
 4. mapping of peptides to the substrate sequence accounting for potential multi-mappers
+5. simple database statistics
+
+Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/computeAllPossible.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`).
 
 ## execution
 invitroSPI relies on [Conda](https://docs.conda.io/en/latest/) and Snakemake.
@@ -30,32 +33,37 @@ After your jobs finished, enter `conda deactivate` in order to terminate your Co
 
 ## input
 invitroSPI identifies spliced and non-spliced peptides from Mascot search result files. Therefore, the user must provide a table `sample_list.csv` in the `INPUT/` folder containing information about:
+- project name
 - substrate ID
 - substrate sequence
 - time point
 - search result file name
 - replicate
+- MSfile (optional)
 
 Additionally, the user must provide **search result** files deposited in the folder `INPUT/search_results/` and list their names in the `sample_list.csv` table.
 
 An example of the `sample_list.csv` table is given below and can be modified accordingly by the user:
 
-| substrateID | substrateSeq | digestTime | filename | replicate |
-| ----- | ----- | ----- | ----- | ----- |
-| TSN2 | VSRQLRTKAWNRQLYPEWTEAQR | 4 | F029125.csv | 1 |
-| TSN89 |	RTKAWNRQLYPEW	| 4	| F029129.csv |	1 |
-| TSN2 | VSRQLRTKAWNRQLYPEWTEAQR |	CTRL |	F029123.csv |	1 |
-| TSN89 |	RTKAWNRQLYPEW |	CTRL |	F029127.csv |	1 |
+| project_name | substrateID | substrateSeq | digestTime | filename | replicate | MSfile |
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- |
+| test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR | 4 | F029125.csv | 1 | |
+| test_data | TSN89 |	RTKAWNRQLYPEW	| 4	| F029129.csv |	1 | |
+| test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR |	CTRL |	F029123.csv |	1 | |
+| test_data | TSN89 |	RTKAWNRQLYPEW |	CTRL |	F029127.csv |	1 | |
 
-Note that also the filenames of the control files must be provided. For the control files, put `CTRL` in the `digestTime` column.
+Note that also the filenames of the control files must be provided. For the control files, put `CTRL` in the `digestTime` column.  
+`MSfile` is an optional column that might be helpful to keep track of the .raw/.mgf files that were used to generate the respective search result files.
 
+The invitroSPI workflow is constructed in such a way that the user can keep appending projects and search result files to the `sample_list`. However, only the samples of the current project (which is specified in `INPUT/config.yaml`) are processed and stored separately in `OUTPUT/project_name` subdirectories.
 
 ## output
-The pipeline provides a final database of identified spliced and non-spliced peptides in .csv format (`OUTPUT/ProteasomeDB.csv`) as well as all intermediate files in binary format (`OUTPUT/tmp/`).
+The pipeline provides a final database of identified spliced and non-spliced peptides in .csv format (`OUTPUT/project_name/ProteasomeDB.csv`) as well as all intermediate files in binary format (`OUTPUT/project_name/tmp/`).
 
 
 ## parameters that can be modified by the user
 We are using the following default parameters that are specified in the `INPUT/config.yaml` file and that can be changed by the user:
+- `project_name`: indicates which files listed in the `sample_list.csv` should be processed (enter valid directory names only! - no spaces or umlauts)
 - `delta_score`: 0.3
 - `ion_score`: 20
 - `q_value`: 0.05
