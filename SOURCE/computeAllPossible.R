@@ -62,7 +62,9 @@ for(pept in 1:N){
   print(substrates$substrateID[pept])
   print("###############")
   
-  for(nmer in 4:(3*length(cntSeq))){
+  e = if (length(cntSeq) <= 20 ) { 2*length(cntSeq) } else { 40 }
+  
+  for(nmer in 4:e){
     #for(nmer in 6:50){
     
     print("-------------------------------")
