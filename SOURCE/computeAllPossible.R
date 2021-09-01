@@ -40,7 +40,16 @@ N = nrow(substrates)
 
 for(pept in 1:N){
   
-  cntSeq = substrates$substrateSeq[pept] %>% strsplit("") %>% unlist()
+  if (grepl(pattern = ".fasta", substrates$substrateSeq[pept])) {
+    
+    cntSeq = read.fasta(file = paste0("INPUT/sequences/", substrates$substrateSeq[pept]),
+                        seqtype = "AA", strip.desc = T) %>%
+      unlist()
+    
+  } else {
+    cntSeq = substrates$substrateSeq[pept] %>% strsplit("") %>% unlist()
+  }
+  
   
   Name = substrates$substrateID[pept]
   Names = Name
