@@ -5,6 +5,8 @@
 # authors:      GS, JL, modified by HPR
 
 library(plyr)
+library(dplyr)
+library(seqinr)
 
 print("--------------------------------------------")
 print("1) PARSE SEARCH RESULT FILES AND CREATE MSDB")
@@ -149,9 +151,21 @@ for (i in 1:nrow(sample_list)) {
     
     currentDB$spliceType <- spliceType
     
+    # substrate sequence
+    if (grepl(pattern = ".fasta", sample_list$substrateSeq[i])) {
+      
+      cntSeq = read.fasta(file = paste0("INPUT/sequences/", sample_list$substrateSeq[i]),
+                          seqtype = "AA", strip.desc = T)[[1]] %>%
+        unlist() %>%
+        paste(collapse = "")
+      
+    } else {
+      cntSeq = sample_list$substrateSeq[i]
+    }
+    
     # add metainfo
     currentDB$substrateID = substrateID
-    currentDB$substrateSeq <- sample_list$substrateSeq[i]
+    currentDB$substrateSeq <- cntSeq
     currentDB$digestTime <- digestTime
     currentDB$runID = paste(substrateID, digestTime, sample_list$replicate[i], sep = "-")
     

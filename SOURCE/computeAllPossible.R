@@ -55,7 +55,7 @@ for(pept in 1:N){
   Names = Name
   write.fasta(paste(cntSeq,sep="",collapse=""),
               Names,
-              file.out=paste0("OUTPUT/", project_name, "/", Name, "_allPSP.fasta"),
+              file.out=paste0("OUTPUT/", project_name, "/", Name, "_allPSP_0.fasta"),
               open="w")
   
   print("################")
@@ -82,7 +82,7 @@ for(pept in 1:N){
       write.fasta(lapply(SP1s[[4]],s2c),
                   Names,
                   as.string=FALSE,
-                  file.out=paste0("OUTPUT/", project_name, "/", Name, "_allPSP.fasta"),
+                  file.out=paste0("OUTPUT/", project_name, "/", Name, "_allPSP_0.fasta"),
                   open="a")
     }
     
@@ -93,7 +93,7 @@ for(pept in 1:N){
       write.fasta(lapply(SP1s[[2]],s2c),
                   Names,
                   as.string=FALSE,
-                  file.out=paste0("OUTPUT/", project_name, "/", Name, "_allPSP.fasta"),
+                  file.out=paste0("OUTPUT/", project_name, "/", Name, "_allPSP_0.fasta"),
                   open="a")
     }
     
