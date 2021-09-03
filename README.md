@@ -47,10 +47,12 @@ An example of the `sample_list.csv` table is given below and can be modified acc
 
 | project_name | substrateID | substrateSeq | digestTime | filename | replicate | MSfile |
 | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-| test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR | 4 | F029125.csv | 1 | |
+| test_data | TSN2 | TSN2.fasta | 4 | F029125.csv | 1 | |
 | test_data | TSN89 |	RTKAWNRQLYPEW	| 4	| F029129.csv |	1 | |
 | test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR |	CTRL |	F029123.csv |	1 | |
 | test_data | TSN89 |	RTKAWNRQLYPEW |	CTRL |	F029127.csv |	1 | |
+
+You can either paste the substrate sequence in the `sample_list` directly or put the name of a single-entry .fasta file containing the substrate sequence. This file should be located in `INPUT/sequences`.
 
 Note that also the filenames of the control files must be provided. For the control files, put `CTRL` in the `digestTime` column.  
 `MSfile` is an optional column that might be helpful to keep track of the .raw/.mgf files that were used to generate the respective search result files.
