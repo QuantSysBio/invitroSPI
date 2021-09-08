@@ -86,21 +86,22 @@ extractedSubstrates <- unique(extracted$substrateID)
 
 missingSubIndex <- which(!(extractedSubstrates %in% controlSubstrates))
 
-if(length(missingSubIndex) > 0){
-  print("WARNING! The following substrates do not have any substrate control measurements:")
-  
-  print(extractedSubstrates[missingSubIndex])
-  
-  print("They are being removed from your table!")
-  extracted <- extracted[-which(extracted$substrateID == extractedSubstrates[missingSubIndex[i]]),]
-  
-}else{
-  print("Success! All substrates in extracted are covered by substrate control measurements!")
-}
-
 # remove synthesis errors
 if (keep_synErrors == "no") {
-  
+     
+    if(length(missingSubIndex) > 0){
+      print("WARNING! The following substrates do not have any substrate control measurements:")
+      
+      print(extractedSubstrates[missingSubIndex])
+      
+      print("They are being removed from your table!")
+      extracted <- extracted[-which(extracted$substrateID == extractedSubstrates[missingSubIndex[i]]),]
+      
+    }else{
+      print("Success! All substrates in extracted are covered by substrate control measurements!")
+    }
+
+ 
   print("Removing synthesis errors from the final dataset")
   
   k = which(str_detect(extracted$productType, "_synError"))
