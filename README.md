@@ -27,7 +27,8 @@ Download this repository as a .zip file (click on *Code* at the upper right corn
 Open the terminal in this directory and enter: `conda activate snakemake`.
 
 The pipeline can be executed by pasting `snakemake --use-conda --cores all -R createMSDB` into the terminal. The progress of the pipeline execution should appear in your terminal window.
-Note that upon reexecution, Snakemake will delete all previously generated output files. We therefore recommend, to rename the final *ProteasomeDB* or move it into another directory.
+In case you have installed an older version of Conda/Snakemake and encounter an error when executing the pipeline, try executing
+`snakemake --use-conda --cores all -R createMSDB --conda-frontend conda`.
 
 After your jobs finished, enter `conda deactivate` in order to terminate your Conda environment.
 
@@ -40,6 +41,12 @@ invitroSPI identifies spliced and non-spliced peptides from Mascot search result
 - search result file name
 - replicate
 - MSfile (optional)
+
+!!!
+In case you are creating/editing the `sample_list.csv` file in Microsoft Excel, make sure to save it as actual comma-separated file. I.e., `Save as...`
+ --> `Comma-separated Values (.csv)`
+To check that the sample list is in the correct format, you can open it using a text editor and verify that the columns are separated by commas (and NOT semicolons).
+!!!
 
 Additionally, the user must provide **search result** files deposited in the folder `INPUT/search_results/` and list their names in the `sample_list.csv` table.
 
