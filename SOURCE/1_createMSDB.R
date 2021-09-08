@@ -18,7 +18,7 @@ SEARCHRESULTS_PATH = "INPUT/search_results"
 
 ### INPUT ###
 sample_list = read.csv(file = snakemake@input[["sample_list"]],
-                       sep = ";", header = T, stringsAsFactors = F)
+                       sep = ",", header = T, stringsAsFactors = F)
 
 # sample_list = read.table(file = "INPUT/sample_list.csv",
 #                          sep = ";", header = T, stringsAsFactors = F)

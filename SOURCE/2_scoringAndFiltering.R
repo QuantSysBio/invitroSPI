@@ -23,7 +23,7 @@ print(paste0("q-value: ", q_value))
 
 ### INPUT ###
 sample_list = read.csv(file = snakemake@input[["sample_list"]],
-                       sep = ";", header = T, stringsAsFactors = F)
+                       sep = ",", header = T, stringsAsFactors = F)
 # filter sample list
 sample_list = sample_list[sample_list$project_name == project_name, ]
 
