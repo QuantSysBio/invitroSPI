@@ -16,7 +16,7 @@ print("-----------------------------------------------------")
 ### INPUT ###
 # load sample list
 sample_list = read.csv(file = "INPUT/sample_list.csv",
-                       sep = ";", header = T, stringsAsFactors = F)
+                       sep = ",", header = T, stringsAsFactors = F)
 
 # load config table
 config = read.table("INPUT/config.yaml")
