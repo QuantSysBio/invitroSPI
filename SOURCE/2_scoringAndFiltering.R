@@ -40,6 +40,7 @@ pb = txtProgressBar(min = 0, max = length(runIDs), style = 3)
 for (i in 1:length(runIDs)) {
   
   setTxtProgressBar(pb, i)
+
   
   selected <- data.frame(matrix(ncol = length(columns), nrow = 0))
   colnames(selected) = columns
@@ -47,7 +48,7 @@ for (i in 1:length(runIDs)) {
   runIDTable <- MSDB[MSDB$runID == runIDs[i],]
   scanNum <- as.character(runIDTable$scanNum)
   scanNum <- unique(scanNum)
-  
+
   substrateX <- gsub("(I|L)", "X", runIDTable$substrateSeq[1])
   
   # Iterate through scanNum and sort by rank
@@ -94,7 +95,7 @@ for (i in 1:length(runIDs)) {
     # How many entries in filteredScans are rank 1?
     filteredScans = scanNumTable
     filteredScans <- filteredScans[order(filteredScans$rank),]
-    #print(filteredScans)
+    
     #browser()
     
     if (filteredScans[1, "ionScore"] != 0){

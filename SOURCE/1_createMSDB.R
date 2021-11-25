@@ -7,6 +7,7 @@
 library(plyr)
 library(dplyr)
 library(seqinr)
+library(stringr)
 
 print("--------------------------------------------")
 print("1) PARSE SEARCH RESULT FILES AND CREATE MSDB")
@@ -95,11 +96,22 @@ for (i in 1:nrow(sample_list)) {
     currentDB$PTM <- currentSearchFile$pep_var_mod
     currentDB$scanNum <- currentSearchFile$pep_query
     
-    #get actual scdan numbers, not query numbers
+    #get actual scan numbers, not query numbers
+    # varies between Mascot and Mascot Distiller
     scans = rep(NA,dim(currentSearchFile)[1])
     for(ii in 1:dim(currentSearchFile)[1]){
       tit = currentSearchFile$pep_scan_title[ii]
-      scans[ii] = as.numeric(strsplit(strsplit(tit,split="scan=")[[1]][2],split="~")[[1]][1])
+      
+      if (str_detect(tit, pattern = "scan=")) {
+        
+        scans[ii] = as.numeric(strsplit(strsplit(tit,split="scan=")[[1]][2],split="~")[[1]][1])
+        
+      } else if (str_detect(tit, pattern = "Scan ")) {
+        
+        scans[[i]] = as.numeric(unlist(strsplit(tit, " "))[3])
+      }
+      
+      
     }
     currentDB$scanNum <- scans
     
