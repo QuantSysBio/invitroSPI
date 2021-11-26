@@ -8,7 +8,8 @@ rule createMSDB:
 	output:
 		MSDB = "OUTPUT/{project_name}/tmp/MSDB.RData"
 	params:
-		project_name = config['project_name']
+		project_name = config['project_name'],
+		include_scanNum = config['include_scanNum']
 	conda:
 		"dependencies.yaml"
 	script:

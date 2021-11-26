@@ -14,6 +14,8 @@ print("1) PARSE SEARCH RESULT FILES AND CREATE MSDB")
 print("--------------------------------------------")
 
 project_name = snakemake@params[["project_name"]]
+include_scanNum = snakemake@params[["include_scanNum"]]
+
 SEARCHRESULTS_PATH = "INPUT/search_results"
 
 
@@ -98,22 +100,28 @@ for (i in 1:nrow(sample_list)) {
     
     #get actual scan numbers, not query numbers
     # varies between Mascot and Mascot Distiller
-    scans = rep(NA,dim(currentSearchFile)[1])
-    for(ii in 1:dim(currentSearchFile)[1]){
-      tit = currentSearchFile$pep_scan_title[ii]
+    if(! include_scanNum == "no") {
       
-      if (str_detect(tit, pattern = "scan=")) {
+      scans = rep(NA,dim(currentSearchFile)[1])
+      for(ii in 1:dim(currentSearchFile)[1]){
+        tit = currentSearchFile$pep_scan_title[ii]
         
-        scans[ii] = as.numeric(strsplit(strsplit(tit,split="scan=")[[1]][2],split="~")[[1]][1])
+        if (str_detect(tit, pattern = "scan=")) {
+          
+          scans[ii] = as.numeric(strsplit(strsplit(tit,split="scan=")[[1]][2],split="~")[[1]][1])
+          
+        } else if (str_detect(tit, pattern = "Scan ")) {
+          
+          scans[[i]] = as.numeric(unlist(strsplit(tit, " "))[3])
+        }
         
-      } else if (str_detect(tit, pattern = "Scan ")) {
         
-        scans[[i]] = as.numeric(unlist(strsplit(tit, " "))[3])
       }
-      
+      currentDB$scanNum <- scans
       
     }
-    currentDB$scanNum <- scans
+    
+    
     
     #extract product type and position information
     pepName <- as.character(currentSearchFile$prot_acc)
