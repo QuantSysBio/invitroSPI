@@ -76,6 +76,8 @@ We are using the following default parameters that are specified in the `INPUT/c
 - `delta_score`: 0.3
 - `ion_score`: 20
 - `q_value`: 0.05
+- `include_scanNum`: "yes"
 - `keep_synErrors`: "no"
 
+Processing of scan numbers is only possible, if .mgf files were created with **msconvert or Mascot Distiller**. In case you provide search results in another format (not recommended), please set `include_scanNum` to "no".
 In case you would like to include synthesis errors (labelled as such) in the final *ProteasomeDB*, change the `keep_synErrors` flag accordingly.
