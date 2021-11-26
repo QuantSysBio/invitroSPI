@@ -34,13 +34,15 @@ load(snakemake@input[["MSDB"]])
 columns = names(MSDB)
 runIDs = unique(MSDB$runID)
 
+print(runIDs)
+
 allPSMs = list()
 
 pb = txtProgressBar(min = 0, max = length(runIDs), style = 3)
 for (i in 1:length(runIDs)) {
-  
-  setTxtProgressBar(pb, i)
 
+    
+  setTxtProgressBar(pb, i)
   
   selected <- data.frame(matrix(ncol = length(columns), nrow = 0))
   colnames(selected) = columns
@@ -48,11 +50,12 @@ for (i in 1:length(runIDs)) {
   runIDTable <- MSDB[MSDB$runID == runIDs[i],]
   scanNum <- as.character(runIDTable$scanNum)
   scanNum <- unique(scanNum)
-
+  
   substrateX <- gsub("(I|L)", "X", runIDTable$substrateSeq[1])
   
   # Iterate through scanNum and sort by rank
   for (k in 1:length(scanNum)) {
+      
     PSPcandidatesIndex = NULL
     PCPcandidatesIndex = NULL
     
@@ -95,7 +98,7 @@ for (i in 1:length(runIDs)) {
     # How many entries in filteredScans are rank 1?
     filteredScans = scanNumTable
     filteredScans <- filteredScans[order(filteredScans$rank),]
-    
+    #print(filteredScans)
     #browser()
     
     if (filteredScans[1, "ionScore"] != 0){
@@ -120,22 +123,28 @@ for (i in 1:length(runIDs)) {
       topIndices = which(scanNumTable$rank == 1)
       topSeqReplaced = replaceSeq[topIndices]
       lenTopRank = length(unique(topSeqReplaced))
-      if (lenTopRank > 1 & length(scanNumTable$productType[which(scanNumTable$rank == 1)]=="PCP")>1){ #
-        filteredScans <- filteredScans[0, ]
-      }
-      if (lenTopRank > 1 & length(scanNumTable$productType[which(scanNumTable$rank == 1)]=="PSP")>1){ #
-        filteredScans <- filteredScans[0, ]
-      }
-      if (lenTopRank > 1 & length(scanNumTable$productType[which(scanNumTable$rank == 1)]=="PCP")==1){ #
-        PCPindex = which(scanNumTable$rank == 1)
+      
+    #  if (lenTopRank > 1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP"))==1){ #
+    #    PCPindex = which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP")
+    #    filteredScans <- filteredScans[PCPindex, ]
+    #  }
+    
+      if (lenTopRank > 1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP"))>=1){ #
+       # filteredScans <- filteredScans[0, ]
+        PCPindex = which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP")[1]
         filteredScans <- filteredScans[PCPindex, ]
       }
+      if (lenTopRank > 1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PSP"))>1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP"))==0){ #
+        filteredScans <- filteredScans[0, ]
+      }
+ 
       
     } 
     
     if (topRanked == 1) {
       lenTopRank = 1
     }
+
     
     if (nrow(filteredScans) > 1 & lenTopRank == 1 & filteredScans[1, "productType"] == "PCP") {
       #lowerRanked <- 2:nrow(filteredScans)
@@ -219,6 +228,7 @@ for (i in 1:length(runIDs)) {
       }
     }
     
+ 
     #filter out scans with low qvalue or scores
     if(nrow(filteredScans)> 0){
       if(as.double(filteredScans$qValue) >= q_value | as.double(filteredScans$ionScore <= ion_score)){
@@ -232,7 +242,7 @@ for (i in 1:length(runIDs)) {
   }
   
   allPSMs[[i]] = selected
-  
+
 }
 
 allPSMs = plyr::ldply(allPSMs)
