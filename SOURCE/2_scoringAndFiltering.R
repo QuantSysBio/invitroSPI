@@ -34,14 +34,12 @@ load(snakemake@input[["MSDB"]])
 columns = names(MSDB)
 runIDs = unique(MSDB$runID)
 
-print(runIDs)
 
 allPSMs = list()
 
 pb = txtProgressBar(min = 0, max = length(runIDs), style = 3)
 for (i in 1:length(runIDs)) {
 
-    
   setTxtProgressBar(pb, i)
   
   selected <- data.frame(matrix(ncol = length(columns), nrow = 0))
@@ -98,7 +96,7 @@ for (i in 1:length(runIDs)) {
     # How many entries in filteredScans are rank 1?
     filteredScans = scanNumTable
     filteredScans <- filteredScans[order(filteredScans$rank),]
-    #print(filteredScans)
+
     #browser()
     
     if (filteredScans[1, "ionScore"] != 0){

@@ -24,7 +24,7 @@ sample_list = read.csv(file = snakemake@input[["sample_list"]],
                        sep = ",", header = T, stringsAsFactors = F)
 
 # sample_list = read.table(file = "INPUT/sample_list.csv",
-#                          sep = ";", header = T, stringsAsFactors = F)
+#                          sep = ",", header = T, stringsAsFactors = F)
 
 # filter sample list
 sample_list = sample_list[sample_list$project_name == project_name, ]
@@ -86,6 +86,14 @@ for (i in 1:nrow(sample_list)) {
                                       skip = length(header), sep = ",", header = TRUE, fill = TRUE))
   
   if(nrow(currentSearchFile) != 0){
+
+    # search result files generated with Mascot Distiller do also contain Queries
+    # and other info
+    ka = which(currentSearchFile$prot_hit_num %in% c("Queries",
+                                                     "Peptide matches not assigned to protein hits"))
+    if (length(ka) > 0) {
+      currentSearchFile = currentSearchFile[c(1:(min(ka)-1)), ]
+    }
     
     currentDB[nrow(currentDB)+ nrow(currentSearchFile),] <- NA  
     
@@ -112,7 +120,7 @@ for (i in 1:nrow(sample_list)) {
           
         } else if (str_detect(tit, pattern = "Scan ")) {
           
-          scans[[i]] = as.numeric(unlist(strsplit(tit, " "))[3])
+          scans[ii] = as.numeric(unlist(strsplit(tit, " "))[3])
         }
         
         
