@@ -1,5 +1,5 @@
 # invitroSPI
-Spliced peptide identification from in vitro digestions of polypeptides with purified proteasomes
+Spliced peptide identification from in vitro digestions of polypeptides with purified proteasomes  
 <img src="invitroSPI.png" width="400">
 
 ## overview
