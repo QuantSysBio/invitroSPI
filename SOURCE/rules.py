@@ -21,7 +21,8 @@ rule scoringAndFiltering:
 		sample_list = "INPUT/sample_list.csv",
 		MSDB = "OUTPUT/{project_name}/tmp/MSDB.RData"
 	output:
-		allPSMs = "OUTPUT/{project_name}/tmp/allPSMs.RData"
+		allPSMs = "OUTPUT/{project_name}/tmp/allPSMs.RData",
+		allPSMs_Delta = "OUTPUT/{project_name}/tmp/allPSMs_Delta.RData"
 	params:
 		project_name = config['project_name'],
 		q_value = config['q_value'],
@@ -48,9 +49,11 @@ rule removeSynErrors:
 
 rule mapping:
 	input:
-		PSMs = "OUTPUT/{project_name}/tmp/extractedPSMs.RData"
+		PSMs = "OUTPUT/{project_name}/tmp/extractedPSMs.RData",
+		allPSMs_Delta = "OUTPUT/{project_name}/tmp/allPSMs_Delta.RData"
 	output:
-		ProteasomeDB = "OUTPUT/{project_name}/ProteasomeDB.csv"
+		ProteasomeDB = "OUTPUT/{project_name}/ProteasomeDB.csv",
+		DeltaPeptides = "OUTPUT/{project_name}/tmp/DeltaPeptides.csv"
 	conda:
 		"dependencies.yaml"
 	script:
@@ -61,7 +64,10 @@ rule output_statistics:
 	input:
 		ProteasomeDB = "OUTPUT/{project_name}/ProteasomeDB.csv"
 	output:
-		DB_stats = "OUTPUT/{project_name}/DB_stats.pdf"
+		DB_stats = "OUTPUT/{project_name}/DB_stats.pdf",
+		number_of_products = "OUTPUT/{project_name}/number_of_products.pdf",
+		coverage_map = "OUTPUT/{project_name}/coverage_map.pdf",
+		length_distributions =  "OUTPUT/{project_name}/length_distributions.pdf"
 	conda:
 		"dependencies.yaml"
 	script:

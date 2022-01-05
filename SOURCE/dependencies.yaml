@@ -9,3 +9,5 @@ dependencies:
   - r-stringr=1.4.0
   - r-plyr=1.8.6
   - r-dplyr=1.0.7
+  - r-ggplot2=3.3.5
+  - r-gridextra=2.3

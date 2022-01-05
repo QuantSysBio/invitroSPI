@@ -2,10 +2,11 @@
 # description:  extract MSDB entries that are clearly identifiable as PCP/PSP
 # input:        MSDB
 # output:       filtered PSMs
-# authors:      GS, JL, modified by HPR
+# authors:      JL, GS, HPR
 
 library(stringr)
 library(plyr)
+library(dplyr)
 
 print("------------------------------------------------")
 print("2) EXTRACT HIGH-QUALITY PSMs FROM SEARCH RESULTS")
@@ -36,6 +37,7 @@ runIDs = unique(MSDB$runID)
 
 
 allPSMs = list()
+allPSMs_Delta = list()
 
 pb = txtProgressBar(min = 0, max = length(runIDs), style = 3)
 for (i in 1:length(runIDs)) {
@@ -45,207 +47,227 @@ for (i in 1:length(runIDs)) {
   selected <- data.frame(matrix(ncol = length(columns), nrow = 0))
   colnames(selected) = columns
   
+  selectedDeltaRecord = data.frame(matrix(ncol = length(columns), nrow = 0))
+  colnames(selectedDeltaRecord) <- columns
+  
   runIDTable <- MSDB[MSDB$runID == runIDs[i],]
   scanNum <- as.character(runIDTable$scanNum)
   scanNum <- unique(scanNum)
   
-  substrateX <- gsub("(I|L)", "X", runIDTable$substrateSeq[1])
   
   # Iterate through scanNum and sort by rank
   for (k in 1:length(scanNum)) {
-      
+    
     PSPcandidatesIndex = NULL
     PCPcandidatesIndex = NULL
     
-    filteredScans = data.frame(matrix(ncol = length(columns), nrow = 0))
-    colnames(filteredScans) <- columns
+    deltaRecord = data.frame(matrix(ncol = length(columns), nrow = 0))
+    colnames(deltaRecord ) <- columns
     
-    #replace leucin(L) and isoleucin(I) with an X 
     scanNumIndex <- which(as.character(runIDTable$scanNum) %in% scanNum[k])
     scanNumTable <- runIDTable[scanNumIndex,]
     scanNumTable <- scanNumTable[order(scanNumTable$rank),]
-    origPepSeqs <- data.frame("pepSeq" = scanNumTable$pepSeq)
     
-    #scanNumTable$pepSeq <- gsub("(I|L)", "X", scanNumTable$pepSeq) 
-    replaceSeq <- gsub("(I|L)", "X", scanNumTable$pepSeq)
-    replacesubtrateX = rep(NA,length(replaceSeq))
-    newPos <- matrix(NA,length(replaceSeq),2)
-    newSeq = rep(NA,length(replaceSeq))
-    
-    for (sq in 1:length(replaceSeq))
-    {
-      replacesubtrateX[sq] <- grepl(replaceSeq[sq],substrateX)
-      if (replacesubtrateX[sq] == 1){
-        newPos[sq,] <- str_locate(substrateX, replaceSeq[sq])[1,]
-        newSeq[sq] <-  paste(strsplit(scanNumTable$substrateSeq[1],split="")[[1]][newPos[sq,1]:newPos[sq,2]],sep="",collapse="")
-      }
-    }
-    
-    scanNumTable$productType[which(replacesubtrateX==1)] = 'PCP'
-    scanNumTable$spliceType[which(replacesubtrateX==1)] = NA
-    temp<-newPos[which(replacesubtrateX==1),]
-    
-    if (length(temp)==2){
-      temp = matrix(temp,1,2)
-    }
-    
-    scanNumTable$positions[which(replacesubtrateX==1)] = apply(temp,1,paste,sep="_",collapse="_")
-    
-    scanNumTable$pepSeq[which(replacesubtrateX==1)] = newSeq[which(replacesubtrateX==1)]
-    
-    # How many entries in filteredScans are rank 1?
+    # # How many entries in filteredScans are rank 1?
+    # scanNumTable = unique(scanNumTable)  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     filteredScans = scanNumTable
-    filteredScans <- filteredScans[order(filteredScans$rank),]
-
-    #browser()
+    filteredScans = filteredScans[order(filteredScans$rank),]
     
+
+    # extract the top score
     if (filteredScans[1, "ionScore"] != 0){
       topScore <- filteredScans[1, "ionScore"]
-    }else{
-      print("filteredScan ion score is 0")
+    } else{
       filteredScans <- filteredScans[0,]
-      next
     }
-    topRanked <- length(which(as.numeric(filteredScans$rank) == 1))
-    if (topRanked == 0)
-    {
+    
+    # extract scans with rank 1
+    allRanks = filteredScans %>%
+      distinct() %>%
+      dplyr::count(rank)
+    
+    NoTopRankedScans <- allRanks$n[allRanks$rank == 1]
+    if (NoTopRankedScans == 0) {
       filteredScans <- filteredScans[0,]
-      next
     }
     
-    # Calculate delta scores
-    
-    # If more than 1 entry is rank 1, remove entire table because correct seq can not be determined
-    if (topRanked > 1) {
+    # if more than 1 scan is rank 1, discard scam unless there is only a single PCP
+    if (NoTopRankedScans > 1) {
       
-      topIndices = which(scanNumTable$rank == 1)
-      topSeqReplaced = replaceSeq[topIndices]
-      lenTopRank = length(unique(topSeqReplaced))
+      topIndices = which(filteredScans$rank == 1)
+      NoTopRankedPeps = filteredScans$pepSeq[topIndices] %>%
+        unique() %>%
+        length()
       
-    #  if (lenTopRank > 1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP"))==1){ #
-    #    PCPindex = which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP")
-    #    filteredScans <- filteredScans[PCPindex, ]
-    #  }
-    
-      if (lenTopRank > 1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP"))>=1){ #
-       # filteredScans <- filteredScans[0, ]
-        PCPindex = which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP")[1]
-        filteredScans <- filteredScans[PCPindex, ]
+      filteredScans = unique(filteredScans)
+      PCPindex = which(filteredScans$productType[filteredScans$rank == 1]=="PCP")
+      PSPindex = which(filteredScans$productType[filteredScans$rank == 1]=="PSP")
+      
+      # if more than one peptide is rank 1
+      # keep scan only if there is just a single PCP, otherwise discard
+      if (NoTopRankedPeps > 1) {
+        
+        if (length(PCPindex) == 1) {
+          
+          filteredScans = filteredScans[PCPindex,]
+          
+          } else {
+            
+            if (length(PSPindex) > 1) {
+              index = which(filteredScans$productType[which(filteredScans$rank == 1)]=="PSP")
+              PSPcandidatescores <- filteredScans[index, "ionScore"]
+              ind = which(1-PSPcandidatescores/topScore <= delta_score)
+              deltaRecord = rbind(deltaRecord,filteredScans[index[ind],])
+            }
+            
+            filteredScans = filteredScans[0,]
+            
+        }
+        
       }
-      if (lenTopRank > 1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PSP"))>1 & length(which(filteredScans$productType[which(filteredScans$rank == 1)]=="PCP"))==0){ #
-        filteredScans <- filteredScans[0, ]
-      }
- 
       
-    } 
-    
-    if (topRanked == 1) {
-      lenTopRank = 1
     }
-
+    # if there is only one scan on rank 1, there is also only one peptide
     
-    if (nrow(filteredScans) > 1 & lenTopRank == 1 & filteredScans[1, "productType"] == "PCP") {
-      #lowerRanked <- 2:nrow(filteredScans)
-      #filteredScans <- filteredScans[-lowerRanked,]
+    # if there is only a single scan on rank 1
+    # (nrow(filteredScans) will be larger than 1 since the previous if condition did not apply)
+    # if the 1st rank is a PCP, assign it as such
+    if (NoTopRankedScans == 1 & filteredScans[1, "productType"] == "PCP") {
+      
+      filteredScans = unique(filteredScans)
       filteredScans <- filteredScans[1,]
-      # print("Top ranked is PCP. Deleting other entries")
       
-      # If rank 1 entry is PSP check if a probable PCP is present in the lower ranks (PCPcandidates)
-    }else if (nrow(filteredScans) > 1 & lenTopRank == 1 & filteredScans[1, "productType"] == "PSP") {
+      # If rank 1 entry is PSP check if a likely PCP is present in the lower ranks (PCPcandidates)
+      # also check if there are lower-ranked PSPs
+    } else if (NoTopRankedScans == 1 & filteredScans[1, "productType"] == "PSP") {
       
+      filteredScans = unique(filteredScans)
+      
+      # lower-ranked PCPs and PSPs
       PCPcandidatesIndex_temp <- which(as.numeric(filteredScans$rank) > 1 & as.character(filteredScans$productType) == "PCP")
       PSPcandidatesIndex_temp <- which(as.numeric(filteredScans$rank) > 1 & as.character(filteredScans$productType) == "PSP")
       
-      if((length(PCPcandidatesIndex_temp)==0)&(length(PSPcandidatesIndex_temp)==0)){
-        filteredScans <- filteredScans[0,]
-        next
+      # if there are no PSPs or PCPs with a lower rank, assign the PSP
+      if(length(PCPcandidatesIndex_temp)==0 & length(PSPcandidatesIndex_temp)==0){
+        filteredScans <- filteredScans[1,]
       }
       
-      if (length(PSPcandidatesIndex_temp)>0)
-      {
+      # if there are PSPs with a lower rank --> get highest-ranked PSM
+      if (length(PSPcandidatesIndex_temp)>0) {
+        #keeps only top PSP candidate
         PSPcandidatesIndex = which(as.numeric(filteredScans$rank)==min(as.numeric(filteredScans$rank)[PSPcandidatesIndex_temp]) & as.character(filteredScans$productType) == "PSP")[1]
-      }
-      else
-      {
+        # keeps all PSP candidates
+        PSPcandidatesIndexAll = PSPcandidatesIndex_temp
+      } else {
         PSPcandidatesIndex = NULL
       }
-      if (length(PCPcandidatesIndex_temp)>0)
-      {
+      
+      # if there are PCPs with a lower rank --> get highest-ranked PSM
+      if (length(PCPcandidatesIndex_temp)>0) {
         PCPcandidatesIndex = which(as.numeric(filteredScans$rank)==min(as.numeric(filteredScans$rank)[PCPcandidatesIndex_temp]) & as.character(filteredScans$productType) == "PCP")[1]
-      }
-      else
-      {
+      } else {
         PCPcandidatesIndex = NULL
       }
+      
+      # for lower-ranked PCPs --> calculate Delta score
+      # Keep top ranked PSP if deltascore > 0.3 and remove rest
       if (length(PCPcandidatesIndex) > 0) {
+        
+        
         PCPcandidatescore <- filteredScans[PCPcandidatesIndex, "ionScore"]
-        # Keep top ranked PSP if deltascore >0.3 and remove rest
-        if (1 - PCPcandidatescore / topScore > delta_score)
-        {
-          # Calculate delta scores
-          #topScore <- filteredScans[1, "ionScore"]
-          if (length(PSPcandidatesIndex)>0)
-          {
+        # if the Delta score between the top-ranked PSP and a lower-ranked PCP
+        # is larger than the threshold
+        if (1 - PCPcandidatescore / topScore > delta_score) {
+          
+          # if there are any lower-ranked PSPs
+          # Calculate delta_score scores also for lower-ranked PSPs
+          if (length(PSPcandidatesIndex)>0) {
             PSPcandidatescore <- filteredScans[PSPcandidatesIndex, "ionScore"]
-            if (1 - PSPcandidatescore / topScore > delta_score)
-            {
+            
+            # lower-ranked PSP, but with very low ion score --> assign top-ranked PSP
+            if (1 - PSPcandidatescore / topScore > delta_score) {
               filteredScans <- filteredScans [1,]
-              # Take candidate PCP as new top ranked and remove rest
-            }
-            else if (1 - PSPcandidatescore / topScore <= delta_score)
-            {
+              
+              # discard spectrum bc there are several PSP candidates with similar
+              # ion score
+            } else if (1 - PSPcandidatescore / topScore <= delta_score) {
+              
+              PSPcandidatescores <- filteredScans[PSPcandidatesIndexAll, "ionScore"]
+              ind = which(1-PSPcandidatescores/topScore <= delta_score)
+              deltaRecord = rbind(deltaRecord,filteredScans[PSPcandidatesIndexAll[ind],])
+              
               filteredScans <- filteredScans[0,]
             }
             
-          }
-          if (length(PSPcandidatesIndex)==0){
+            # if there are no lower-ranked PSPs --> assign the top-ranked PSP
+          } else if (length(PSPcandidatesIndex)==0){
             filteredScans <- filteredScans[1,]
           }
-        }
-        # Take candidate PCP as new top ranked and remove rest
-        else if (1 - PCPcandidatescore / topScore <= delta_score)
-        {
+          
+          # if the Delta score is too small:
+          # Take candidate PCP as new top ranked and remove rest
+        } else if (1 - PCPcandidatescore / topScore <= delta_score) {
           filteredScans <- filteredScans[PCPcandidatesIndex,]
         }
         
-      } # end if (length(PCPcandidatesIndex) > 0) 
-      # if only PSPs
-      if (length(PSPcandidatesIndex)>0 & length(PCPcandidatesIndex)==0){
+        # end if there are both PCPs and PSPs in lower ranks
+        # if there are lower ranked PSPs but no PCPs: continue
+        
+      } else if (length(PSPcandidatesIndex) > 0 & length(PCPcandidatesIndex)==0){
         PSPcandidatescore <- filteredScans[PSPcandidatesIndex, "ionScore"]
-        if (1 - PSPcandidatescore / topScore > delta_score)
-        {
+        
+        # keep the candidate PSP if the Delta score is large enough
+        if (1 - PSPcandidatescore / topScore > delta_score) {
           filteredScans <- filteredScans [1,]
           
-          # Take candidate PCP as new top ranked and remove rest
-        }
-        else if (1 - PSPcandidatescore / topScore <= delta_score)
-        {
+          # if the Delta score is too small --> discard entire scan
+        } else if (1 - PSPcandidatescore / topScore <= delta_score) {
+          
+          PSPcandidatescores <- filteredScans[PSPcandidatesIndexAll, "ionScore"]
+          ind = which(1-PSPcandidatescores/topScore <= delta_score)
+          deltaRecord = rbind(deltaRecord,filteredScans[PSPcandidatesIndexAll[ind],])
+          
           filteredScans <- filteredScans[0,]
         }
         
       }
     }
     
- 
-    #filter out scans with low qvalue or scores
-    if(nrow(filteredScans)> 0){
+    # apply filter for q-value and ion score
+    if(nrow(filteredScans) > 0){
       if(as.double(filteredScans$qValue) >= q_value | as.double(filteredScans$ionScore <= ion_score)){
-        
         filteredScans <- filteredScans[0,]
       }else{
         selected <- rbind(filteredScans, selected)
       }
     }
     
+    if(nrow(deltaRecord)> 0){
+      k = which(as.double(deltaRecord$qValue) < q_value & as.double(deltaRecord$ionScore > ion_score))
+      deltaRecord <- deltaRecord[k,]
+      
+      if(nrow(deltaRecord)> 0){
+        selectedDeltaRecord <- rbind(deltaRecord,selectedDeltaRecord)
+      }
+    }
+    
   }
   
   allPSMs[[i]] = selected
+  allPSMs_Delta[[i]] = selectedDeltaRecord
 
 }
 
 allPSMs = plyr::ldply(allPSMs)
+allPSMs_Delta = plyr::ldply(allPSMs_Delta)
+
+paste0("number of PSMs: ", nrow(allPSMs)) %>%
+  print()
+
 
 ### OUTPUT ###
 
 save(allPSMs, file = unlist(snakemake@output[["allPSMs"]]))
+save(allPSMs_Delta, file = unlist(snakemake@output[["allPSMs_Delta"]]))
+
 

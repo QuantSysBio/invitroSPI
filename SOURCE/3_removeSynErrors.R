@@ -104,9 +104,15 @@ if (keep_synErrors == "no") {
  
   print("Removing synthesis errors from the final dataset")
   
-  k = which(str_detect(extracted$productType, "_synError"))
-  if (length(k > 0)) {
-    extracted = extracted[-k, ]
+  kk = which(str_detect(extracted$productType, "_synError"))
+  if (length(kk > 0)) {
+    extracted = extracted[-kk, ]
+    
+    print("........................................................")
+    paste0("number of synthesis errors that are being removed: ", length(kk)) %>%
+      print()
+    print("........................................................")
+    
   }
   
 }

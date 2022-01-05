@@ -1,10 +1,19 @@
 ### invitroSPI ###
-# description:  generate statistics of ProteasomeDB
+# description:  generate statistics + plots of ProteasomeDB
 # input:        ProteasomeDB
-# output:       DB statistics
+# output:       DB statistics, plots
 # authors:      HPR
 
+library(dplyr)
+library(stringr)
+library(grid)
+library(ggplot2)
+library(gridExtra)
+
+theme_set(theme_bw())
+
 source("SOURCE/invitroSPI_utils.R")
+source("SOURCE/plottingFunctions.R")
 
 print("-------------------------------")
 print("5) GENERATE DATABASE STATISTICS")
@@ -14,84 +23,91 @@ print("-------------------------------")
 ### INPUT ###
 ProteasomeDB = read.csv(snakemake@input[["ProteasomeDB"]],
                         stringsAsFactors = F)
-# ProteasomeDB = read.csv("../data/submission/ProteasomeDB.csv", stringsAsFactors = F)
+# ProteasomeDB = read.csv("../../data/submission/ProteasomeDB.csv", stringsAsFactors = F)
+
+S = ProteasomeDB$substrateID %>% unique()
+tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
+
 
 ### MAIN PART ###
-##### stats #####
-print("#################################")
-print("assigned peptide-spectrum matches")
-paste0("n = ", nrow(ProteasomeDB)) %>%
-  print()
 
-ProteasomeDB.psm = ProteasomeDB %>%
+# ----- 1) pre-processing -----
+uniquePeps = ProteasomeDB %>%
   ILredundancy() %>%
   filterPepLength() %>%
-  removeSubstrateFromPCPs %>%
-  disentangleMultimappers.Type() %>%
-  DBcosmetics()
-print("#################################")
-
-
-print("###############")
-print("unique peptides")
-ProteasomeDB.unique = ProteasomeDB.psm %>%
-  remSynthErrors() %>%
+  filter20Sstandard() %>%
   uniquePeptides() %>%
+  disentangleMultimappers.Type() %>%
+  disentangleMultimappers.SRlen() %>%
+  disentangleMultimappers.IVSeqLen() %>%
+  disentangleMultimappers.AA() %>%
   DBcosmetics()
-print("###############")
 
-###### plots #####
-TypeFrequency = function(DB) {
+
+# ----- 2) general stats + peptides over time -----
+
+# plotNumberofPeptides(ProteasomeDB,
+#                      outname = "OUTPUT/test_data/number_of_products.pdf")
+plotNumberofPeptides(ProteasomeDB,
+                     outname = unlist(snakemake@output[["number_of_products"]]))
+
+# pdf("OUTPUT/test_data/DBstats.pdf", height = 4, width = 6)
+pdf(file = unlist(snakemake@output[["DB_stats"]]), height = 4, width = 6)
+generalStats(uniquePeps, tp = "all") %>% grid.table()
+
+for (t in 1:length(tps)) {
+  cntDB = uniquePeps[uniquePeps$digestTime == tps[t], ]
+  grid.newpage()
+  generalStats(DB = cntDB, tp = tps[t]) %>% grid.table()
   
-  subSeqs = DB$substrateSeq %>% unique()
-  freqs = list()
+}
+dev.off()
+
+
+
+# ----- 3) coverage maps -----
+
+# pdf("OUTPUT/test_data/coverage_map.pdf", height = 12, width = 16)
+pdf(unlist(snakemake@output[["coverage_map"]]), height = 12, width = 16)
+for (s in 1:length(S)) {
   
-  for (s in 1:length(subSeqs)) {
-    cntDB = DB[DB$substrateSeq == subSeqs[s], ]
-    cntFreqs = cntDB$spliceType %>% table() %>% as.data.frame()
-    cntFreqs$. = as.character(cntFreqs$.)
-    
-    # remove multimappers if present
-    k = which(str_detect(cntFreqs$., "type_multi-mapper"))
-    if (length(k) > 0) { cntFreqs = cntFreqs[-k, ] }
-    
-    cntFreqs$.[which(str_detect(cntFreqs$., "cis_"))] = "cis"
-    cntFreqs$.[which(str_detect(cntFreqs$., "revCis_"))] = "revCis"
-    if (any(str_detect(cntFreqs$., "trans_"))) { cntFreqs$.[which(str_detect(cntFreqs$., "trans_"))] = "trans" }
-    
-    names(cntFreqs)[1] = "type"
-    cntFreqs$Freq = as.numeric(cntFreqs$Freq)
-    
-    cntFreqs = cntFreqs %>%
-      group_by(type) %>%
-      summarise(Freq = sum(Freq))
-    cntFreqs$Freq = as.numeric(cntFreqs$Freq) / nrow(cntDB)
-    freqs[[s]] = cntFreqs
-    
-  }
+  cntDB = uniquePeps[uniquePeps$substrateID == S[s], ]
+  out = plotCoverage(cntDB, name = S[s], tp = "all")
+  replayPlot(out)
   
-  freqs = plyr::ldply(freqs)
-  names(freqs) = c("type", "value")
-  
-  freqs$type = factor(freqs$type,
-                      levels = c("PCP", "cis", "revCis", "trans"))
-  freqs$value = freqs$value * 100
-  
-  return(freqs)
 }
 
-freqs = TypeFrequency(DB = ProteasomeDB.unique)
+dev.off()
 
-### OUTPUT ###
-pdf(file = unlist(snakemake@output[["DB_stats"]]),
-    height = 6, width = 4)
+# ----- 4) length distributions + product type frequencies -----
 
-boxplot(value~type, data = freqs,
-        col = c(plottingCols["PCP"], plottingCols["cis"],
-                plottingCols["revCis"], plottingCols["trans"]),
-        main = "unique peptides",
-        xlab = "product type",
-        ylab = "frequency per substrate (%)")
+# pdf("OUTPUT/test_data/length_distributions.pdf", height = 10, width = 14)
+pdf(file = unlist(snakemake@output[["length_distributions"]]), height = 12, width = 16)
 
+freq = TypeFrequency(uniquePeps)
+pl = PepLength(uniquePeps, tp="all")
+srlen = SRLength(uniquePeps, tp="all")
+ivlen = IVSeqLength(uniquePeps, tp="all")
+
+cntG = grid.arrange(freq,pl,srlen,ivlen,
+                    nrow = 2, ncol = 2)
+
+print(cntG)
+
+for (t in 1:length(tps)) {
+  
+  cntDB = uniquePeps[uniquePeps$digestTime == tps[t], ]
+  
+  freq = TypeFrequency(cntDB)
+  pl = PepLength(cntDB, tp=tps[t])
+  srlen = SRLength(cntDB, tp=tps[t])
+  ivlen = IVSeqLength(cntDB, tp=tps[t])
+  
+  cntG = grid.arrange(freq,pl,srlen,ivlen,
+                      nrow = 2, ncol = 2)
+  
+  print(cntG)
+  
+}
 dev.off()
 

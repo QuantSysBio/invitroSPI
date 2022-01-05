@@ -2,12 +2,14 @@
 # description:  parse search result files and create MSDB
 # input:        sample list
 # output:       MSDB
-# authors:      GS, JL, modified by HPR
+# authors:      GS, JL, HPR
 
 library(plyr)
 library(dplyr)
 library(seqinr)
 library(stringr)
+
+source("SOURCE/loadFunctions.r")
 
 print("--------------------------------------------")
 print("1) PARSE SEARCH RESULT FILES AND CREATE MSDB")
@@ -28,6 +30,14 @@ sample_list = read.csv(file = snakemake@input[["sample_list"]],
 
 # filter sample list
 sample_list = sample_list[sample_list$project_name == project_name, ]
+
+# add meta-information
+if (!any(is.na(sample_list$metainformation)) & length(unique(sample_list$metainformation)) == 1) {
+  metainfo = read.csv(sample_list$metainformation[1], stringsAsFactors = F)
+  meta = T
+} else {
+  meta = F
+}
 
 ### MAIN PART ###
 
@@ -54,7 +64,7 @@ MSDB = list()
 pb = txtProgressBar(min = 0, max = nrow(sample_list), style = 3)
 
 for (i in 1:nrow(sample_list)) {
-  setTxtProgressBar(pb, i)
+  # setTxtProgressBar(pb, i)
   
   # empty DB for current search result file
   currentDB = data.frame(matrix(ncol = length(columns), nrow = 0))
@@ -108,7 +118,7 @@ for (i in 1:nrow(sample_list)) {
     
     #get actual scan numbers, not query numbers
     # varies between Mascot and Mascot Distiller
-    if(! include_scanNum == "no") {
+    if(include_scanNum != "no") {
       
       scans = rep(NA,dim(currentSearchFile)[1])
       for(ii in 1:dim(currentSearchFile)[1]){
@@ -146,39 +156,6 @@ for (i in 1:nrow(sample_list)) {
     currentDB$productType <- pepType
     currentDB$positions <- pepPos
     
-    # Determine spliceTypes of PSPs
-    pepPos <- strsplit(pepPos, "_")
-    spliceType <- c()
-    for (n in 1:length(pepPos)){
-      
-      currentPos <- as.numeric(pepPos[[n]])
-      
-      if(length(currentPos) == 2){
-        
-        spliceType <- c(spliceType, NA)
-        
-      } else if(length(currentPos) == 4){
-        
-        # Check if splice reactants 1 and 2 overlap
-        overlap <- any(currentPos[3]:currentPos[4] %in% currentPos[1]:currentPos[2])
-        
-        if(overlap == TRUE){
-          spliceType <- c(spliceType, "trans")
-          
-        }else if(currentPos[2] > currentPos[3]){
-          spliceType <- c(spliceType, "revCis")
-          
-        }else{
-          spliceType <- c(spliceType, "cis")
-          
-        }
-      }else{
-        spliceType <- c(spliceType, NA)
-      }
-    }
-    
-    currentDB$spliceType <- spliceType
-    
     # substrate sequence
     if (grepl(pattern = ".fasta", sample_list$substrateSeq[i])) {
       
@@ -196,6 +173,39 @@ for (i in 1:nrow(sample_list)) {
     currentDB$substrateSeq <- cntSeq
     currentDB$digestTime <- digestTime
     currentDB$runID = paste(substrateID, digestTime, sample_list$replicate[i], sep = "-")
+    
+    # add further meta-information if provided
+    if (meta) {
+      
+      cntMeta = metainfo[metainfo$filename == sample_list$filename[i], ]
+      currentDB = cbind(currentDB, cntMeta[rep(1,nrow(currentDB)),]) %>%
+        as.data.frame()
+      
+      dp = which(duplicated(names(currentDB)))
+      if (length(dp) > 0) { currentDB = currentDB[,-dp]}
+      
+    }
+    
+    print("")
+    paste0("obtain correct annotations for positions and splice types for run: ",
+           currentDB$runID[1]) %>%
+      print()
+    
+    # get positions and splice type
+    # account for substrate
+    kap = which(currentDB$substrateSeq == currentDB$pepSeq)
+    
+    currentDB_substrateHits = currentDB[kap, ]
+    currentDB_substrateHits$positions = paste(1, nchar(currentDB_substrateHits$substrateSeq), sep = "_")
+    currentDB_substrateHits$productType = "PCP"
+    
+    currentDB_noSubstrates = currentDB[-kap,] %>%
+      as.data.frame() %>%
+      mapping()
+    
+    currentDB = rbind(currentDB_substrateHits, currentDB_noSubstrates) %>%
+      as.data.frame()
+    currentDB$spliceType[currentDB$productType == "PCP"] = NA
     
   } else {
     print("No peptides listed in this file! Skipping...")
