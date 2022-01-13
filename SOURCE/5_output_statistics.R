@@ -24,6 +24,7 @@ print("-------------------------------")
 ProteasomeDB = read.csv(snakemake@input[["ProteasomeDB"]],
                         stringsAsFactors = F)
 # ProteasomeDB = read.csv("../../data/submission/ProteasomeDB.csv", stringsAsFactors = F)
+# ProteasomeDB = read.csv("OUTPUT/test_data/ProteasomeDB.csv", stringsAsFactors = F)
 
 S = ProteasomeDB$substrateID %>% unique()
 tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
@@ -32,6 +33,7 @@ tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
 ### MAIN PART ###
 
 # ----- 1) pre-processing -----
+
 uniquePeps = ProteasomeDB %>%
   ILredundancy() %>%
   filterPepLength() %>%

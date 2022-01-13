@@ -1,6 +1,7 @@
 
 library(plyr)
 library(dplyr)
+library(stringr)
 
 getPositions <- function(seq,substrate){
     
@@ -195,8 +196,9 @@ getPositions <- function(seq,substrate){
 # re-map peptides
 mapping = function(DB) {
   
-  d = DB[,c("substrateSeq", "productType","pepSeq")] %>%
-    unique()
+  d = DB %>%
+    select(substrateSeq, productType, spliceType, pepSeq) %>%
+    distinct()
   
   pb = txtProgressBar(min = 0, max = dim(d)[1], style = 3)
   
@@ -213,6 +215,7 @@ mapping = function(DB) {
       if(dim(x)[2]==2){
         d$positions[i] = paste(apply(x,1,paste,collapse="_"),collapse=";")
       }
+      
       
       #PSP
       if(dim(x)[2]>2){
@@ -238,9 +241,7 @@ mapping = function(DB) {
           
         }
         
-        
         d$spliceType[i] = paste(types,collapse=";")
-        
       }
     }
     
@@ -249,10 +250,22 @@ mapping = function(DB) {
   DB$productType = NULL
   DB$spliceType = NULL
   DB$positions = NULL
+  
+  
   DB = left_join(DB, d) %>%
     as.data.frame()
   
+  # re-assign the product type
+  pos = strsplit(DB$positions, "_")
+  wr = which(sapply(pos, length) == 2 & str_detect(DB$productType, "PSP"))
+  if (length(wr) > 0) {
+    DB$productType[wr] = str_replace(DB$productType[wr], "PSP", "PCP")
+  }
+  
+  xr = which(sapply(pos, length) == 4 & str_detect(DB$productType, "PCP"))
+  if (length(xr) > 0) {
+    DB$productType[xr] = str_replace(DB$productType[xr], "PCP", "PSP")
+  }
+  
   return(DB)
 }
-
-

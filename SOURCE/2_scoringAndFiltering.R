@@ -35,7 +35,6 @@ load(snakemake@input[["MSDB"]])
 columns = names(MSDB)
 runIDs = unique(MSDB$runID)
 
-
 allPSMs = list()
 allPSMs_Delta = list()
 
@@ -50,9 +49,15 @@ for (i in 1:length(runIDs)) {
   selectedDeltaRecord = data.frame(matrix(ncol = length(columns), nrow = 0))
   colnames(selectedDeltaRecord) <- columns
   
-  runIDTable <- MSDB[MSDB$runID == runIDs[i],]
-  scanNum <- as.character(runIDTable$scanNum)
-  scanNum <- unique(scanNum)
+  runIDTable = MSDB[MSDB$runID == runIDs[i],]
+  scanNum = as.character(runIDTable$scanNum) %>% unique()
+  
+  # bah = sapply(scanNum, function(x){
+  #   all(runIDTable$rank[runIDTable$scanNum == x] > 1)
+  # }) %>% which()
+  # if (length(bah) > 0) {
+  #   print("THERE ARE PSMS WITHOUT A TOP-RANKED PEPTIDE!!")
+  # }
   
   
   # Iterate through scanNum and sort by rank
@@ -62,44 +67,40 @@ for (i in 1:length(runIDs)) {
     PCPcandidatesIndex = NULL
     
     deltaRecord = data.frame(matrix(ncol = length(columns), nrow = 0))
-    colnames(deltaRecord ) <- columns
+    colnames(deltaRecord ) = columns
     
-    scanNumIndex <- which(as.character(runIDTable$scanNum) %in% scanNum[k])
-    scanNumTable <- runIDTable[scanNumIndex,]
-    scanNumTable <- scanNumTable[order(scanNumTable$rank),]
+    scanNumTable = runIDTable[runIDTable$scanNum == scanNum[k],]
+    scanNumTable = scanNumTable[order(scanNumTable$rank),]
     
     # # How many entries in filteredScans are rank 1?
-    # scanNumTable = unique(scanNumTable)  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    scanNumTable = unique(scanNumTable)
     filteredScans = scanNumTable
     filteredScans = filteredScans[order(filteredScans$rank),]
     
-
+    # print(filteredScans)
+    
     # extract the top score
-    if (filteredScans[1, "ionScore"] != 0){
-      topScore <- filteredScans[1, "ionScore"]
-    } else{
-      filteredScans <- filteredScans[0,]
-    }
+    topScore <- filteredScans[1, "ionScore"]
     
     # extract scans with rank 1
-    allRanks = filteredScans %>%
-      distinct() %>%
-      dplyr::count(rank)
+    allRanks = table(filteredScans$rank)
+    NoTopRankedScans <- allRanks[names(allRanks) == 1]
     
-    NoTopRankedScans <- allRanks$n[allRanks$rank == 1]
-    if (NoTopRankedScans == 0) {
+    # it can somehow happen that there is no top-ranked peptide...
+    if (length(NoTopRankedScans) == 0) {
       filteredScans <- filteredScans[0,]
-    }
-    
-    # if more than 1 scan is rank 1, discard scam unless there is only a single PCP
-    if (NoTopRankedScans > 1) {
+      paste0("!!! NO RANK 1 PEPTIDES FOUND IN SCAN ", scanNum[k], ", RUN-ID ", runIDs[i], " !!!") %>%
+        print()
+      print("likely, there is an issue with the Mascot search settings - check!")
+      
+    } else if (NoTopRankedScans > 1) {
       
       topIndices = which(filteredScans$rank == 1)
-      NoTopRankedPeps = filteredScans$pepSeq[topIndices] %>%
+      NoTopRankedPeps = gsub("I","L",filteredScans$pepSeq[topIndices]) %>%
         unique() %>%
         length()
       
-      filteredScans = unique(filteredScans)
+      
       PCPindex = which(filteredScans$productType[filteredScans$rank == 1]=="PCP")
       PSPindex = which(filteredScans$productType[filteredScans$rank == 1]=="PSP")
       
@@ -107,9 +108,13 @@ for (i in 1:length(runIDs)) {
       # keep scan only if there is just a single PCP, otherwise discard
       if (NoTopRankedPeps > 1) {
         
-        if (length(PCPindex) == 1) {
+        if (length(PCPindex) >= 1) {
           
-          filteredScans = filteredScans[PCPindex,]
+          if (length(unique(gsub("I","L",filteredScans$pepSeq[PCPindex]))) == 1) {
+            filteredScans = filteredScans[PCPindex[1],]
+          } else {
+            filteredScans = filteredScans[0,]
+          }
           
           } else {
             
@@ -124,7 +129,9 @@ for (i in 1:length(runIDs)) {
             
         }
         
-      }
+      } else {
+        filteredScans = filteredScans[1,]
+      } 
       
     }
     # if there is only one scan on rank 1, there is also only one peptide
@@ -132,16 +139,13 @@ for (i in 1:length(runIDs)) {
     # if there is only a single scan on rank 1
     # (nrow(filteredScans) will be larger than 1 since the previous if condition did not apply)
     # if the 1st rank is a PCP, assign it as such
-    if (NoTopRankedScans == 1 & filteredScans[1, "productType"] == "PCP") {
+    else if (NoTopRankedScans == 1 & filteredScans[1, "productType"] == "PCP") {
       
-      filteredScans = unique(filteredScans)
       filteredScans <- filteredScans[1,]
       
       # If rank 1 entry is PSP check if a likely PCP is present in the lower ranks (PCPcandidates)
       # also check if there are lower-ranked PSPs
     } else if (NoTopRankedScans == 1 & filteredScans[1, "productType"] == "PSP") {
-      
-      filteredScans = unique(filteredScans)
       
       # lower-ranked PCPs and PSPs
       PCPcandidatesIndex_temp <- which(as.numeric(filteredScans$rank) > 1 & as.character(filteredScans$productType) == "PCP")
@@ -164,7 +168,7 @@ for (i in 1:length(runIDs)) {
       
       # if there are PCPs with a lower rank --> get highest-ranked PSM
       if (length(PCPcandidatesIndex_temp)>0) {
-        PCPcandidatesIndex = which(as.numeric(filteredScans$rank)==min(as.numeric(filteredScans$rank)[PCPcandidatesIndex_temp]) & as.character(filteredScans$productType) == "PCP")[1]
+        PCPcandidatesIndex = which(as.numeric(filteredScans$rank)==min(as.numeric(filteredScans$rank)[PCPcandidatesIndex_temp]) & as.character(filteredScans$productType) == "PCP")
       } else {
         PCPcandidatesIndex = NULL
       }
@@ -174,7 +178,7 @@ for (i in 1:length(runIDs)) {
       if (length(PCPcandidatesIndex) > 0) {
         
         
-        PCPcandidatescore <- filteredScans[PCPcandidatesIndex, "ionScore"]
+        PCPcandidatescore <- filteredScans[PCPcandidatesIndex[1], "ionScore"]
         # if the Delta score between the top-ranked PSP and a lower-ranked PCP
         # is larger than the threshold
         if (1 - PCPcandidatescore / topScore > delta_score) {
@@ -207,7 +211,19 @@ for (i in 1:length(runIDs)) {
           # if the Delta score is too small:
           # Take candidate PCP as new top ranked and remove rest
         } else if (1 - PCPcandidatescore / topScore <= delta_score) {
-          filteredScans <- filteredScans[PCPcandidatesIndex,]
+          if (length(PCPcandidatesIndex) == 1) {
+            filteredScans <- filteredScans[PCPcandidatesIndex,]
+          } else {
+            
+            # more than one lower-ranked PCP that survived Delta filter
+            if (length(unique(gsub("I","L",filteredScans$pepSeq[PCPcandidatesIndex]))) == 1) {
+              filteredScans <- filteredScans[PCPcandidatesIndex[1],]
+            } else {
+              filteredScans = filteredScans[0,]
+            }
+            
+          }
+          
         }
         
         # end if there are both PCPs and PSPs in lower ranks
@@ -232,7 +248,7 @@ for (i in 1:length(runIDs)) {
         
       }
     }
-    
+   
     # apply filter for q-value and ion score
     if(nrow(filteredScans) > 0){
       if(as.double(filteredScans$qValue) >= q_value | as.double(filteredScans$ionScore <= ion_score)){

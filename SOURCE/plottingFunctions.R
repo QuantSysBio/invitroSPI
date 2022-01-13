@@ -64,6 +64,11 @@ plotNumberofPeptides = function(ProteasomeDB, outname) {
   psms = res$psms
   peps = res$peps
   
+  if (length(unique(ProteasomeDB$digestTime)) == 1) {
+    psms = psms[psms$digestTime == 0, ]
+    peps = peps[peps$digestTime == 0, ]
+  }
+  
   # number of PSMs over time
   psms$digestTime = factor(psms$digestTime, levels = sort(unique(as.numeric(psms$digestTime))))
   psms$spliceType = factor(psms$spliceType, levels = c("PCP", "cis", "revCis", "trans", "type_multi-mapper"))
@@ -310,7 +315,7 @@ SRLength = function(DB, tp) {
     ylab("splice reactant length (aa residues)") +
     scale_x_discrete(labels = c("forward cis", "reverse cis", "trans")) +
     # scale_y_continuous(limits = c(0, 40), breaks = seq(0, 40, by = 5)) +
-    ggtitle("SR2 length distribution",
+    ggtitle("SR1 length distribution",
             subtitle = paste0(tp, " hrs"))
   
   sr2.plot = ViolinPlot(data = sr2) +
