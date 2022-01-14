@@ -114,6 +114,8 @@ for (i in 1:nrow(sample_list)) {
     # varies between Mascot and Mascot Distiller
     if(include_scanNum != "no") {
       
+      warn = F
+      
       scans = rep(NA,dim(currentSearchFile)[1])
       for(ii in 1:dim(currentSearchFile)[1]){
         tit = currentSearchFile$pep_scan_title[ii]
@@ -125,11 +127,20 @@ for (i in 1:nrow(sample_list)) {
         } else if (str_detect(tit, pattern = "Scan ")) {
           
           scans[ii] = as.numeric(unlist(strsplit(tit, " "))[3])
+          
+        } else if (str_detect(tit, pattern = coll(".")) | str_detect(tit, pattern = "TSN")) {
+          scans[ii] = as.numeric(strsplit(tit,split="\\.")[[1]][2])
+          
+        } else {
+          warn = T
         }
-        
         
       }
       currentDB$scanNum <- scans
+      
+      if (warn) {
+        print("could not extract scan numbers - check search result formatting!")
+      }
       
     }
     
