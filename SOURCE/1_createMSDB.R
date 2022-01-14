@@ -140,6 +140,7 @@ for (i in 1:nrow(sample_list)) {
       
       if (warn) {
         print("could not extract scan numbers - check search result formatting!")
+        currentDB$scanNum = currentSearchFile$pep_query
       }
       
     }
