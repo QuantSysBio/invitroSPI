@@ -35,11 +35,11 @@ for (i in 1:length(unqTSN))
   
   
   # Get all unique peptide seqs present in the substrate controls
-  subControlSeq <- unique(subControls$pepSeq)
+  subControlSeq <- gsub("I","L",unique(subControls$pepSeq))
   
   # Check which entries of extracted are also present in the substrate controls.
-  errorIndex <- which(extracted$pepSeq %in% subControlSeq)
-  errorSeqs <- unique(extracted[errorIndex, "pepSeq"])
+  errorIndex <- which(gsub("I","L",extracted$pepSeq) %in% gsub("I","L",subControlSeq))
+  errorSeqs <- unique(gsub("I","L",extracted[errorIndex, "pepSeq"]))
   
   # We conservatively regard all matches as synthesis errors and delete them from extracted
   # extracted0 <- extracted0[-extIndex[errorIndex], ]
@@ -49,7 +49,7 @@ for (i in 1:length(unqTSN))
   for (b in 1:nrow(extracted)){
     candidateType <- extracted[b, "productType"]
     if (candidateType == "PSP"){
-      candidateSeq <- extracted[b, "pepSeq"]
+      candidateSeq <- gsub("I","L",extracted[b, "pepSeq"])
       
       if (nchar(candidateSeq) > 4 & any(grepl(candidateSeq, subControlSeq))){
         PSPtoRemove <- c(PSPtoRemove, b)

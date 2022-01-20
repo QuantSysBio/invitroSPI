@@ -24,7 +24,7 @@ print("-------------------------------")
 ProteasomeDB = read.csv(snakemake@input[["ProteasomeDB"]],
                         stringsAsFactors = F)
 # ProteasomeDB = read.csv("../../data/submission/ProteasomeDB.csv", stringsAsFactors = F)
-# ProteasomeDB = read.csv("OUTPUT/test_data/ProteasomeDB.csv", stringsAsFactors = F)
+ProteasomeDB = read.csv("OUTPUT/Delta03/ProteasomeDB.csv", stringsAsFactors = F)
 
 S = ProteasomeDB$substrateID %>% unique()
 tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
@@ -34,12 +34,11 @@ tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
 
 # ----- 1) pre-processing -----
 
-uniquePeps = ProteasomeDB %>%
+Peps = ProteasomeDB %>%
   remSynthErrors() %>%
   ILredundancy() %>%
   filterPepLength() %>%
   filter20Sstandard() %>%
-  uniquePeptides() %>%
   disentangleMultimappers.Type() %>%
   disentangleMultimappers.SRlen() %>%
   disentangleMultimappers.IVSeqLen() %>%
@@ -66,17 +65,20 @@ ProteasomeDB = ProteasomeDB %>%
 
 # ----- 2) general stats + peptides over time -----
 
+uniquePeps = Peps %>% uniquePeptides()
+
 # plotNumberofPeptides(ProteasomeDB,
-#                      outname = "OUTPUT/test_data/number_of_products.pdf")
+#                      outname = "OUTPUT/Delta03/number_of_products.pdf")
 plotNumberofPeptides(ProteasomeDB,
                      outname = unlist(snakemake@output[["number_of_products"]]))
 
-# pdf("OUTPUT/test_data/DBstats.pdf", height = 4, width = 6)
+# pdf("OUTPUT/Delta03/DBstats.pdf", height = 4, width = 6)
 pdf(file = unlist(snakemake@output[["DB_stats"]]), height = 4, width = 6)
 generalStats(uniquePeps, tp = "all") %>% grid.table()
 
 for (t in 1:length(tps)) {
-  cntDB = uniquePeps[uniquePeps$digestTime == tps[t], ]
+  cntDB = Peps[Peps$digestTime == tps[t], ] %>%
+    uniquePeptides()
   grid.newpage()
   generalStats(DB = cntDB, tp = tps[t]) %>% grid.table()
   
@@ -101,7 +103,7 @@ dev.off()
 
 # ----- 4) length distributions + product type frequencies -----
 
-# pdf("OUTPUT/test_data/length_distributions.pdf", height = 10, width = 14)
+# pdf("OUTPUT/Delta03/length_distributions.pdf", height = 10, width = 14)
 pdf(file = unlist(snakemake@output[["length_distributions"]]), height = 12, width = 16)
 
 freq = TypeFrequency(uniquePeps)
