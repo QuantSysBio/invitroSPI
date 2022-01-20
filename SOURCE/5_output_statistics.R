@@ -35,6 +35,7 @@ tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
 # ----- 1) pre-processing -----
 
 uniquePeps = ProteasomeDB %>%
+  remSynthErrors() %>%
   ILredundancy() %>%
   filterPepLength() %>%
   filter20Sstandard() %>%
@@ -45,6 +46,23 @@ uniquePeps = ProteasomeDB %>%
   disentangleMultimappers.AA() %>%
   DBcosmetics()
 
+ProteasomeDB = ProteasomeDB %>%
+  remSynthErrors()
+
+# k = which(duplicated(uniquePeps$pepSeq) | duplicated(uniquePeps$pepSeq, fromLast = T))
+# tmp = uniquePeps[k, ] %>% 
+#   group_by(pepSeq) %>%
+#   summarise(n_substrates = length(unique(substrateID)),
+#             n_timepoints = length(unique(digestTime)),
+#             n_types = length(unique(spliceType)),
+#             n_positions = length(unique(positions)))
+# 
+# su = apply(tmp[,c(2:5)], 1, sum)
+# kk = which(su <= 4)
+# 
+# kk2 = which(apply(tmp[,c(2:4)], 1, sum) <= 3 & tmp$n_positions > 1)
+# 
+# uniquePeps[k[kk], ] %>% View()
 
 # ----- 2) general stats + peptides over time -----
 
@@ -70,16 +88,16 @@ dev.off()
 # ----- 3) coverage maps -----
 
 # pdf("OUTPUT/test_data/coverage_map.pdf", height = 12, width = 16)
-pdf(unlist(snakemake@output[["coverage_map"]]), height = 12, width = 16)
-for (s in 1:length(S)) {
-  
-  cntDB = uniquePeps[uniquePeps$substrateID == S[s], ]
-  out = plotCoverage(cntDB, name = S[s], tp = "all")
-  replayPlot(out)
-  
-}
-
-dev.off()
+# pdf(unlist(snakemake@output[["coverage_map"]]), height = 12, width = 16)
+# for (s in 1:length(S)) {
+#   
+#   cntDB = uniquePeps[uniquePeps$substrateID == S[s], ]
+#   out = plotCoverage(cntDB, name = S[s], tp = "all")
+#   replayPlot(out)
+#   
+# }
+# 
+# dev.off()
 
 # ----- 4) length distributions + product type frequencies -----
 

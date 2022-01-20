@@ -303,6 +303,41 @@ filterPepLength = function(DB, cutoff=6) {
   return(DB)
 }
 
+########## synthesis errors ########## 
+
+remSynthErrors = function(DB) {
+  print("REMOVE SYNTHESIS ERRORS")
+  
+  k = which(str_detect(DB$productType, "synError"))
+  if (length(k) > 0) {
+    DB = DB[-k, ]
+  }
+  
+  return(DB)
+}
+
+
+keepSynthErrors = function(DB) {
+  print("FILTER FOR SYNTHESIS ERRORS")
+  
+  k = which(str_detect(DB$productType, "synError"))
+  if (length(k) > 0) {
+    DB = DB[k, ]
+  }
+  
+  return(DB)
+}
+
+########## early time points only ########## 
+filterEarlyTimepoints = function(DB) {
+  print("FILTER FOR EARLY TIME POINTS")
+  
+  DB = DB[which(DB$digestTime %in% c(2, 4)), ]
+  
+  return(DB)
+}
+
+
 ########## 20S standard proteasome only ########## 
 filter20Sstandard = function(DB) {
   print("FILTER FOR 20S STANDARD PROTEASOME")
@@ -333,6 +368,17 @@ uniquePeptides = function(DB) {
   DB = DB %>%
     distinct(substrateID, substrateSeq, pepSeq, productType,
              spliceType, positions, .keep_all = T)
+  
+  # DB2 = DB %>%
+  #   group_by(substrateID, substrateSeq, pepSeq, productType,
+  #            spliceType, positions) %>% slice(1)
+  
+  # DB3 = DB[, c("substrateID", "substrateSeq", "pepSeq",
+  #             "productType", "spliceType", "positions")] %>%
+  #   unique()
+  
+  # DB4 = DB[!duplicated(DB[, c("substrateID", "substrateSeq", "pepSeq",
+  #                             "productType", "spliceType", "positions")]),]
   
   return(DB)
 }

@@ -66,7 +66,6 @@ rule output_statistics:
 	output:
 		DB_stats = "OUTPUT/{project_name}/DB_stats.pdf",
 		number_of_products = "OUTPUT/{project_name}/number_of_products.pdf",
-		coverage_map = "OUTPUT/{project_name}/coverage_map.pdf",
 		length_distributions =  "OUTPUT/{project_name}/length_distributions.pdf"
 	conda:
 		"dependencies.yaml"
