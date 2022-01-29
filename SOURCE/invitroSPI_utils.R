@@ -291,7 +291,7 @@ removeMultimappers.IVSeqLen = function(DB) {
 
 
 ########## filter for peptide length ########## 
-filterPepLength = function(DB, cutoff=6) {
+filterPepLength = function(DB, cutoff=5) {
   print(paste0("REMOVE PEPTIDES THAT ARE SHORTER THAN ", cutoff, " AA"))
   
   k = which(nchar(DB$pepSeq) < cutoff)
@@ -367,7 +367,8 @@ uniquePeptides = function(DB) {
   
   DB = DB %>%
     distinct(substrateID, substrateSeq, pepSeq, productType,
-             spliceType, positions, .keep_all = T)
+             #spliceType,
+             positions, .keep_all = T)
   
   # DB2 = DB %>%
   #   group_by(substrateID, substrateSeq, pepSeq, productType,

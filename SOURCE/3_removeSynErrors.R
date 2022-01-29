@@ -15,6 +15,11 @@ print("----------------------------")
 load(snakemake@input[["allPSMs"]])
 keep_synErrors = snakemake@params[["keep_synErrors"]]
 
+# gsub("I","L",subControls0$pepSeq) %>% unique() %>% length()
+# gsub("I","L",ProteasomeDB$pepSeq[str_detect(ProteasomeDB$productType, "synError")]) %>% unique() %>% length()
+# gsub("I","L",ProteasomeDB$pepSeq[str_detect(ProteasomeDB$productType, "_synErrorPrecursor")]) %>% unique() %>% length()
+# gsub("I","L",ProteasomeDB$pepSeq[str_detect(ProteasomeDB$productType, "_synError$")]) %>% unique() %>% length()
+
 
 ### MAIN PART ###
 subControls0 = allPSMs[allPSMs$digestTime == "CTRL", ]
@@ -35,11 +40,11 @@ for (i in 1:length(unqTSN))
   
   
   # Get all unique peptide seqs present in the substrate controls
-  subControlSeq <- gsub("I","L",unique(subControls$pepSeq))
+  subControlSeq <- unique(gsub("I","L",subControls$pepSeq))
   
   # Check which entries of extracted are also present in the substrate controls.
-  errorIndex <- which(gsub("I","L",extracted$pepSeq) %in% gsub("I","L",subControlSeq))
-  errorSeqs <- unique(gsub("I","L",extracted[errorIndex, "pepSeq"]))
+  errorIndex <- which(gsub("I","L",extracted$pepSeq) %in% subControlSeq)
+  errorSeqs <- unique(gsub("I","L",extracted$pepSeq[errorIndex]))
   
   # We conservatively regard all matches as synthesis errors and delete them from extracted
   # extracted0 <- extracted0[-extIndex[errorIndex], ]
@@ -47,11 +52,11 @@ for (i in 1:length(unqTSN))
   # Match PSPs to errors
   PSPtoRemove <- c()
   for (b in 1:nrow(extracted)){
-    candidateType <- extracted[b, "productType"]
-    if (candidateType == "PSP"){
-      candidateSeq <- gsub("I","L",extracted[b, "pepSeq"])
+    candidateType <- extracted$productType[b]
+    if (str_detect(candidateType,"PSP")){
+      candidateSeq <- gsub("I","L",extracted$pepSeq[b])
       
-      if (nchar(candidateSeq) > 4 & any(grepl(candidateSeq, subControlSeq))){
+      if (any(grepl(candidateSeq, subControlSeq))){
         PSPtoRemove <- c(PSPtoRemove, b)
       }
     }
@@ -62,13 +67,11 @@ for (i in 1:length(unqTSN))
   if(length(k)>0){
     PSPtoRemove = PSPtoRemove[-k]
   }
-  # Remove PSPs that were found to match errors
-  if (length(errorIndex)>0)
-  {
+  # Label PSPs that were found to match errors
+  if (length(errorIndex)>0) {
     extracted$productType[errorIndex] = paste(extracted$productType[errorIndex],"_synError",sep="")
   }
-  if (length(PSPtoRemove)>0)
-  {
+  if (length(PSPtoRemove)>0) {
     extracted$productType[PSPtoRemove] = paste(extracted$productType[PSPtoRemove],"_synErrorPrecursor",sep="")
   }
   

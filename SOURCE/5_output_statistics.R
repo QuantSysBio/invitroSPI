@@ -24,7 +24,7 @@ print("-------------------------------")
 ProteasomeDB = read.csv(snakemake@input[["ProteasomeDB"]],
                         stringsAsFactors = F)
 # ProteasomeDB = read.csv("../../data/submission/ProteasomeDB.csv", stringsAsFactors = F)
-ProteasomeDB = read.csv("OUTPUT/Delta03/ProteasomeDB.csv", stringsAsFactors = F)
+# ProteasomeDB = read.csv("OUTPUT/Delta03_IL/ProteasomeDB.csv", stringsAsFactors = F)
 
 S = ProteasomeDB$substrateID %>% unique()
 tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
@@ -38,7 +38,6 @@ Peps = ProteasomeDB %>%
   remSynthErrors() %>%
   ILredundancy() %>%
   filterPepLength() %>%
-  filter20Sstandard() %>%
   disentangleMultimappers.Type() %>%
   disentangleMultimappers.SRlen() %>%
   disentangleMultimappers.IVSeqLen() %>%
@@ -68,11 +67,11 @@ ProteasomeDB = ProteasomeDB %>%
 uniquePeps = Peps %>% uniquePeptides()
 
 # plotNumberofPeptides(ProteasomeDB,
-#                      outname = "OUTPUT/Delta03/number_of_products.pdf")
+#                      outname = "OUTPUT/Delta03_IL/number_of_products.pdf")
 plotNumberofPeptides(ProteasomeDB,
                      outname = unlist(snakemake@output[["number_of_products"]]))
 
-# pdf("OUTPUT/Delta03/DBstats.pdf", height = 4, width = 6)
+# pdf("OUTPUT/Delta03_IL/DBstats.pdf", height = 4, width = 6)
 pdf(file = unlist(snakemake@output[["DB_stats"]]), height = 4, width = 6)
 generalStats(uniquePeps, tp = "all") %>% grid.table()
 
