@@ -82,7 +82,7 @@ for (i in 1:nrow(sample_list)) {
   kk = which(currentSearchFile$prot_hit_num == "")
   if (length(kk) > 0) {
     kk = min(kk)
-    currentSearchFile2 = currentSearchFile[c(1:(kk-2)),]
+    currentSearchFile = currentSearchFile[c(1:(kk-2)),]
   }
   
   substrateID = sample_list$substrateID[i]
