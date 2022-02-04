@@ -4,11 +4,11 @@ Spliced peptide identification from in vitro digestions of polypeptides with pur
 
 ## overview
 The invitroSPI pipeline consists of four main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
-1. parsing of search result files and creation of a preliminary MS database (*MSDB*) containing all peptide-spectrum matches (PSMs)
+1. parsing of search result files and creation of a preliminary MS database (*MSDB*) containing all peptide-spectrum matches (PSMs), mapping of peptides to their substrate origins considering redundancy of I and L
 2. scoring and filtering of PSMs using Mascot's ion score and q-value as well as the delta score described in the manuscript
 3. identification and, optionally, removal of synthesis errors using the control runs
 4. mapping of peptides to the substrate sequence accounting for potential multi-mappers
-5. simple database statistics
+5. database statistics and diagnostic information
 
 Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/computeAllPossible.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`).
 
@@ -24,6 +24,7 @@ Briefly, open the terminal on your computer and paste the following lines sequen
 Additionally, you might need to run `conda update conda`.
 
 Download this repository as a .zip file (click on *Code* at the upper right corner of this repository --> Download ZIP), move the .zip file in the desired directory on your computer and unpack it.
+**Make sure to edit `INPUT/sample_list.csv` and `INPUT/config.yaml` before starting the data processing** (see below for a more detailed description)
 Open the terminal in this directory and enter: `conda activate snakemake`.
 
 The pipeline can be executed by pasting `snakemake --use-conda --cores all -R createMSDB` into the terminal. The progress of the pipeline execution should appear in your terminal window.
@@ -41,6 +42,7 @@ invitroSPI identifies spliced and non-spliced peptides from Mascot search result
 - search result file name
 - replicate
 - MSfile (optional)
+- metainformation (optional)
 
 !!!
 In case you are creating/editing the `sample_list.csv` file in Microsoft Excel, make sure to save it as actual comma-separated file. I.e., `Save as...`
@@ -52,32 +54,37 @@ Additionally, the user must provide **search result** files deposited in the fol
 
 An example of the `sample_list.csv` table is given below and can be modified accordingly by the user:
 
-| project_name | substrateID | substrateSeq | digestTime | filename | replicate | MSfile |
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-| test_data | TSN2 | TSN2.fasta | 4 | F029125.csv | 1 | |
-| test_data | TSN89 |	RTKAWNRQLYPEW	| 4	| F029129.csv |	1 | |
-| test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR |	CTRL |	F029123.csv |	1 | |
-| test_data | TSN89 |	RTKAWNRQLYPEW |	CTRL |	F029127.csv |	1 | |
+| project_name | substrateID | substrateSeq | digestTime | filename | replicate | MSfile | metainformation |
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
+| test_data | TSN2 | TSN2.fasta | 4 | F029125.csv | 1 | | INPUT/metainformation_SciData2022.csv |
+| test_data | TSN89 |	RTKAWNRQLYPEW	| 4	| F029129.csv |	1 | | INPUT/metainformation_SciData2022.csv |
+| test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR |	CTRL |	F029123.csv |	1 | | INPUT/metainformation_SciData2022.csv |
+| test_data | TSN89 |	RTKAWNRQLYPEW |	CTRL |	F029127.csv |	1 | | INPUT/metainformation_SciData2022.csv |
 
 You can either paste the substrate sequence in the `sample_list` directly or put the name of a single-entry .fasta file containing the substrate sequence. This file should be located in `INPUT/sequences`.
 
-Note that also the filenames of the control files must be provided. For the control files, put `CTRL` in the `digestTime` column.  
-`MSfile` is an optional column that might be helpful to keep track of the .raw/.mgf files that were used to generate the respective search result files.
+Note that also the filenames of the control files must be provided. **For the control files, put `CTRL` in the `digestTime` column**. Please provide all other time points in hours (*e.g.*, 0.5 for 30 min).  
+`MSfile` is an optional column that might be helpful to keep track of the .raw/.mgf files that were used to generate the respective search result files. It will not be used to create the database.  
+In case you would like to include additional information in the final database (for instance species, location, instrument, substrate origin, proteasome isotype, ...), you could do so by creating a .csv table containing all this information. The .csv table must also contain a column `filename` corresponding to the `filename` in the sample list (see `INPUT/metainformation_SciData2022` for an example). Provide the name of the metainformation table in the `metainformation` column of the sample list.
 
 The invitroSPI workflow is constructed in such a way that the user can keep appending projects and search result files to the `sample_list`. However, only the samples of the current project (which is specified in `INPUT/config.yaml`) are processed and stored separately in `OUTPUT/project_name` subdirectories.
 
 ## output
 The pipeline provides a final database of identified spliced and non-spliced peptides in .csv format (`OUTPUT/project_name/ProteasomeDB.csv`) as well as all intermediate files in binary format (`OUTPUT/project_name/tmp/`).
 
+Additionally, some diagnostic plots and database statistics are being produced which can also be found in the `OUTPUT/` folder. They comprise:
+- number of unique peptides
+- number and frequencies of peptides and PSMs at each time point
+- length distribution of peptides, splice reactants and intervening sequences at each time point
 
 ## parameters that can be modified by the user
 We are using the following default parameters that are specified in the `INPUT/config.yaml` file and that can be changed by the user:
-- `project_name`: indicates which files listed in the `sample_list.csv` should be processed (enter valid directory names only! - no spaces or umlauts)
+- `project_name`: indicates which files listed in the `sample_list.csv` should be processed (enter valid directory names only! - no spaces or German umlauts)
 - `delta_score`: 0.3
 - `ion_score`: 20
 - `q_value`: 0.05
 - `include_scanNum`: "yes"
 - `keep_synErrors`: "no"
 
-Processing of scan numbers is only possible, if .mgf files were created with **msconvert or Mascot Distiller**. In case you provide search results in another format (not recommended), please set `include_scanNum` to "no".
+Processing of scan numbers is only possible if .mgf files were created with **msconvert or Mascot Distiller**. In case you provide search results in another format (not recommended), please set `include_scanNum` to "no".
 In case you would like to include synthesis errors (labelled as such) in the final *ProteasomeDB*, change the `keep_synErrors` flag accordingly.
