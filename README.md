@@ -56,10 +56,10 @@ An example of the `sample_list.csv` table is given below and can be modified acc
 
 | project_name | substrateID | substrateSeq | digestTime | filename | replicate | MSfile | metainformation |
 | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-| test_data | TSN2 | TSN2.fasta | 4 | F029125.csv | 1 | | INPUT/metainformation_SciData2022.csv |
-| test_data | TSN89 |	RTKAWNRQLYPEW	| 4	| F029129.csv |	1 | | INPUT/metainformation_SciData2022.csv |
-| test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR |	CTRL |	F029123.csv |	1 | | INPUT/metainformation_SciData2022.csv |
-| test_data | TSN89 |	RTKAWNRQLYPEW |	CTRL |	F029127.csv |	1 | | INPUT/metainformation_SciData2022.csv |
+| test_data | TSN2 | TSN2.fasta | 4 | F029125.csv | 1 | | INPUT/metainformation_testData.csv |
+| test_data | TSN89 |	RTKAWNRQLYPEW	| 4	| F029129.csv |	1 | | INPUT/metainformation_testData.csv |
+| test_data | TSN2 | VSRQLRTKAWNRQLYPEWTEAQR |	CTRL |	F029123.csv |	1 | | INPUT/metainformation_testData.csv |
+| test_data | TSN89 |	RTKAWNRQLYPEW |	CTRL |	F029127.csv |	1 | | INPUT/metainformation_testData.csv |
 
 You can either paste the substrate sequence in the `sample_list` directly or put the name of a single-entry .fasta file containing the substrate sequence. This file should be located in `INPUT/sequences`.
 
