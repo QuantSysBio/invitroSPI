@@ -4,7 +4,7 @@ Spliced peptide identification from in vitro digestions of polypeptides with pur
 
 ## overview
 The invitroSPI pipeline consists of four main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
-1. parsing of search result files and creation of a preliminary MS database (*MSDB*) containing all peptide-spectrum matches (PSMs), mapping of peptides to their substrate origins considering redundancy of I and L
+1. parsing of search result files and creation of a preliminary MS database (*MSDB*) containing all peptide-spectrum matches (PSMs), mapping of peptides to their substrate origins and potential product type re-assignment
 2. scoring and filtering of PSMs using Mascot's ion score and q-value as well as the delta score described in the manuscript
 3. identification and, optionally, removal of synthesis errors using the control runs
 4. mapping of peptides to the substrate sequence accounting for potential multi-mappers
