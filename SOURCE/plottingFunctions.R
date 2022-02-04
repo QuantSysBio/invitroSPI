@@ -29,11 +29,13 @@ getNumberofPeptides = function(ProteasomeDB) {
   psms = DB_filtered %>%
     group_by(substrateID,spliceType, digestTime) %>%
     summarise(n = n()) %>%
+    ungroup() %>% group_by(substrateID, digestTime) %>%
     mutate(freq = n / sum(n))
   
   psms_allTP = DB_filtered %>%
     group_by(substrateID,spliceType) %>%
     summarise(n = n()) %>%
+    ungroup() %>% group_by(substrateID) %>%
     mutate(freq = n / sum(n)) %>%
     mutate(digestTime = 0)
   
@@ -42,12 +44,14 @@ getNumberofPeptides = function(ProteasomeDB) {
     uniquePeptides() %>%
     group_by(substrateID,spliceType, digestTime) %>%
     summarise(n = n()) %>%
+    ungroup() %>% group_by(substrateID, digestTime) %>%
     mutate(freq = n / sum(n))
   
   peps_allTP = DB_filtered %>%
     uniquePeptides() %>%
     group_by(substrateID,spliceType) %>%
     summarise(n = n()) %>%
+    ungroup() %>% group_by(substrateID) %>%
     mutate(freq = n / sum(n)) %>%
     mutate(digestTime = 0)
   
@@ -83,7 +87,7 @@ plotNumberofPeptides = function(ProteasomeDB, outname) {
     scale_color_manual("product type",
                        values = c(plottingCols["PCP"], plottingCols["cis"], plottingCols["revCis"],
                                   plottingCols["trans"], "gray"),
-                       labels = c("cleavage", "forward cis", "reverse cis", "trans", "multi-mapper")) +
+                       labels = c("non-spliced", "forward cis", "reverse cis", "trans", "multi-mapper")) +
     ggtitle("number of PSMs") +
     ylab("# PSMs") +
     xlab("digestion time")
@@ -94,7 +98,7 @@ plotNumberofPeptides = function(ProteasomeDB, outname) {
     scale_color_manual("product type",
                        values = c(plottingCols["PCP"], plottingCols["cis"], plottingCols["revCis"],
                                   plottingCols["trans"], "gray"),
-                       labels = c("cleavage", "forward cis", "reverse cis", "trans", "multi-mapper")) +
+                       labels = c("non-spliced", "forward cis", "reverse cis", "trans", "multi-mapper")) +
     ylim(c(0,1)) +
     ggtitle("frequency of PSMs") +
     ylab("frequency") +
@@ -112,7 +116,7 @@ plotNumberofPeptides = function(ProteasomeDB, outname) {
     scale_color_manual("product type",
                        values = c(plottingCols["PCP"], plottingCols["cis"], plottingCols["revCis"],
                                   plottingCols["trans"], "gray"),
-                       labels = c("cleavage", "forward cis", "reverse cis", "trans", "multi-mapper")) +
+                       labels = c("non-spliced", "forward cis", "reverse cis", "trans", "multi-mapper")) +
     ggtitle("number of unique peptides") +
     ylab("# unique peptides") +
     xlab("digestion time")
@@ -123,7 +127,7 @@ plotNumberofPeptides = function(ProteasomeDB, outname) {
     scale_color_manual("product type",
                        values = c(plottingCols["PCP"], plottingCols["cis"], plottingCols["revCis"],
                                   plottingCols["trans"], "gray"),
-                       labels = c("cleavage", "forward cis", "reverse cis", "trans", "multi-mapper")) +
+                       labels = c("non-spliced", "forward cis", "reverse cis", "trans", "multi-mapper")) +
     ylim(c(0,1)) +
     ggtitle("frequency of unique peptides") +
     ylab("frequency") +
@@ -255,7 +259,7 @@ ViolinPlot = function(data) {
     scale_fill_manual("product type",
                       values = c(plottingCols["PCP"], plottingCols["cis"], plottingCols["revCis"],
                                  plottingCols["trans"]),
-                      labels = c("cleavage", "forward cis", "reverse cis", "trans")) +
+                      labels = c("non-spliced", "forward cis", "reverse cis", "trans")) +
     theme(axis.text.x = element_text(angle = 90),
           legend.position = "none")
   
@@ -276,7 +280,7 @@ PepLength = function(DB, tp) {
   
   pepLen = ViolinPlot(data = pl) +
     ylab("peptide product length (aa residues)") +
-    scale_x_discrete(labels = c("cleavage", "forward cis", "reverse cis", "trans")) +
+    scale_x_discrete(labels = c("non-spliced", "forward cis", "reverse cis", "trans")) +
     # scale_y_continuous(limits = c(0, 40), breaks = seq(0, 40, by = 5)) +
     ggtitle("peptide length distribution",
             subtitle = paste0(tp, " hrs"))
@@ -356,6 +360,7 @@ IVSeqLength = function(DB, tp) {
     
     ivl = data.frame(value = iv,
                      type = db$spliceType)
+    ivl$type = factor(ivl$type, levels = c("cis", "revCis", "trans"))
     return(ivl)
   }
   
@@ -396,7 +401,7 @@ TypeFrequency = function(DB) {
     scale_fill_manual("product type",
                       values = c(plottingCols["PCP"], plottingCols["cis"], plottingCols["revCis"],
                                  plottingCols["trans"]),
-                      labels = c("cleavage", "forward cis", "reverse cis", "trans")) +
+                      labels = c("non-spliced", "forward cis", "reverse cis", "trans")) +
     theme_void() +
     geom_text(aes(y = ypos, label=paste0("n = ", n)), size = 4)
   

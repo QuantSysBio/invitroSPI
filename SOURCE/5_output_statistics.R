@@ -23,8 +23,7 @@ print("-------------------------------")
 ### INPUT ###
 ProteasomeDB = read.csv(snakemake@input[["ProteasomeDB"]],
                         stringsAsFactors = F)
-# ProteasomeDB = read.csv("../../data/submission/ProteasomeDB.csv", stringsAsFactors = F)
-# ProteasomeDB = read.csv("OUTPUT/Delta03_IL/ProteasomeDB.csv", stringsAsFactors = F)
+# ProteasomeDB = read.csv("OUTPUT/test_data/ProteasomeDB.csv", stringsAsFactors = F)
 
 S = ProteasomeDB$substrateID %>% unique()
 tps = ProteasomeDB$digestTime %>% unique() %>% as.numeric() %>% sort()
@@ -47,31 +46,17 @@ Peps = ProteasomeDB %>%
 ProteasomeDB = ProteasomeDB %>%
   remSynthErrors()
 
-# k = which(duplicated(uniquePeps$pepSeq) | duplicated(uniquePeps$pepSeq, fromLast = T))
-# tmp = uniquePeps[k, ] %>% 
-#   group_by(pepSeq) %>%
-#   summarise(n_substrates = length(unique(substrateID)),
-#             n_timepoints = length(unique(digestTime)),
-#             n_types = length(unique(spliceType)),
-#             n_positions = length(unique(positions)))
-# 
-# su = apply(tmp[,c(2:5)], 1, sum)
-# kk = which(su <= 4)
-# 
-# kk2 = which(apply(tmp[,c(2:4)], 1, sum) <= 3 & tmp$n_positions > 1)
-# 
-# uniquePeps[k[kk], ] %>% View()
 
 # ----- 2) general stats + peptides over time -----
 
 uniquePeps = Peps %>% uniquePeptides()
 
 # plotNumberofPeptides(ProteasomeDB,
-#                      outname = "OUTPUT/Delta03_IL/number_of_products.pdf")
+#                      outname = "OUTPUT/test_data/number_of_products.pdf")
 plotNumberofPeptides(ProteasomeDB,
                      outname = unlist(snakemake@output[["number_of_products"]]))
 
-# pdf("OUTPUT/Delta03_IL/DBstats.pdf", height = 4, width = 6)
+# pdf("OUTPUT/test_data/DB_stats.pdf", height = 4, width = 6)
 pdf(file = unlist(snakemake@output[["DB_stats"]]), height = 4, width = 6)
 generalStats(uniquePeps, tp = "all") %>% grid.table()
 
