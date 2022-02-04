@@ -177,7 +177,7 @@ for (i in 1:nrow(sample_list)) {
     currentDB$substrateID = substrateID
     currentDB$substrateSeq <- cntSeq
     currentDB$digestTime <- digestTime
-    currentDB$runID = paste(substrateID, digestTime, sample_list$replicate[i], sep = "-")
+    currentDB$runID = paste(substrateID, digestTime,sample_list$filename[i], sample_list$replicate[i], sep = "-")
     
     # add further meta-information if provided
     if (meta) {
