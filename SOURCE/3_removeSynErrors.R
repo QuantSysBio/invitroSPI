@@ -2,9 +2,10 @@
 # description:  removal of peptides that are present in the control data set from the database
 # input:        filtered (all) PSMs
 # output:       extracted PSMs of the final database
-# authors:      GS, JL, modified by HPR
+# authors:      GS, JL, HPR
 
 library(stringr)
+library(dplyr)
 
 print("----------------------------")
 print("3) IDENTIFY SYNTHESIS ERRORS")
@@ -41,6 +42,17 @@ for (i in 1:length(unqTSN))
   
   # Get all unique peptide seqs present in the substrate controls
   subControlSeq <- unique(gsub("I","L",subControls$pepSeq))
+  subControlPCP = unique(gsub("I","L",subControls$pepSeq[subControls$productType == "PCP"]))
+  
+  # get SR2s of detected sequences
+  extPos = str_split_fixed(extracted$positions,"[:punct:]",Inf)[,c(1:4)]
+  extPos = apply(extPos,2,as.numeric)
+  extracted = extracted %>%
+    mutate(sr2s = gsub("I","L",str_sub(extracted$substrateSeq, extPos[,3], extPos[,4])),
+           synErrSR2 = ifelse(sr2s %in% subControlPCP, "yes", "no"),
+           synErrSR2 = ifelse(productType == "PCP", NA, synErrSR2)) %>%
+    select(-sr2s)
+  
   
   # Check which entries of extracted are also present in the substrate controls.
   errorIndex <- which(gsub("I","L",extracted$pepSeq) %in% subControlSeq)
