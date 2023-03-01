@@ -2,6 +2,10 @@
 Spliced peptide identification from in vitro digestions of polypeptides with purified proteasomes  
 <img src="invitroSPI.png" width="400">
 
+Please cite the following publication if you are using invitroSPI for your research:
+
+> Roetschke, H.P., Rodriguez-Hernandez, G., Cormican, J.A. et al. InvitroSPI and a large database of proteasome-generated spliced and non-spliced peptides. Sci Data 10, 18 (2023). https://doi.org/10.1038/s41597-022-01890-6
+
 ## overview
 The invitroSPI pipeline consists of four main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
 1. parsing of search result files and creation of a preliminary MS database (*MSDB*) containing all peptide-spectrum matches (PSMs), mapping of peptides to their substrate origins and potential product type re-assignment
