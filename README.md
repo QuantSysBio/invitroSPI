@@ -14,7 +14,7 @@ The invitroSPI pipeline consists of four main steps that are implemented in a [S
 4. mapping of peptides to the substrate sequence accounting for potential multi-mappers
 5. database statistics and diagnostic information
 
-Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/computeAllPossible.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`).
+Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/_generateSearchDB_polypeptides.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`).
 
 ## execution
 invitroSPI relies on [Conda](https://docs.conda.io/en/latest/) and Snakemake.
