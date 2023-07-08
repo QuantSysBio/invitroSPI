@@ -1,6 +1,6 @@
 # invitroSPI
 Spliced peptide identification from in vitro digestions of polypeptides with purified proteasomes  
-<img src="invitroSPI.png" width="400">
+<img src="invitroSPI_white.png" width="400">
 
 Please cite the following publication if you are using invitroSPI for your research:
 
