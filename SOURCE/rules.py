@@ -72,3 +72,16 @@ rule output_statistics:
 	script:
 		"5_output_statistics.R"
 
+
+rule plot_spectra:
+	input:
+		ProteasomeDB = "INPUT/plotSpectraTest/ProteasomeDB.csv", 
+		sample_list = "INPUT/plotSpectraTest/sample_list.csv",
+		mgf_folder = "INPUT/plotSpectraTest/mgf_folder"
+	output:
+		output_folder="OUTPUT/plotSpectraTest",
+		output_filename="combined_result_file.pdf"
+	conda:
+		"dependencies.yaml"
+	script:
+		"plot_spectra.py"
