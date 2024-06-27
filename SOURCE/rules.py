@@ -75,12 +75,13 @@ rule output_statistics:
 
 rule plot_spectra:
 	input:
-		ProteasomeDB = "INPUT/plotSpectraTest/ProteasomeDB.csv", 
-		sample_list = "INPUT/plotSpectraTest/sample_list.csv",
-		mgf_folder = "INPUT/plotSpectraTest/mgf_folder"
+		ProteasomeDB = "OUTPUT/{project_name}/ProteasomeDB.csv", 
+		sample_list = "INPUT/sample_list.csv"
+		
 	output:
-		output_folder="OUTPUT/plotSpectraTest",
-		output_filename="combined_result_file.pdf"
+		spectra_plot="OUTPUT/{project_name}/ms2_spectra.pdf"
+	params:
+		mgf_folder = config['mgf_folder']
 	conda:
 		"dependencies.yaml"
 	script:

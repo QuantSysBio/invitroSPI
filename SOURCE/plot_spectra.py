@@ -2,14 +2,16 @@ import os
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
-import glob
 import re
 import numpy as np
-from collections import defaultdict
-import math
 import multiprocessing
 import shutil
 import PyPDF2
+import subprocess
+import tempfile
+
+
+project_name = snakemake.config['project_name']
 
 PROTON = 1.007276466622
 ELECTRON = 0.00054858
@@ -353,7 +355,30 @@ def plot_single_peptide(peptide, spectra_dict, mgf_data, pdf_filename, temp_fold
     print(f"Spectra plots saved as '{pdf_path}'")
 
 
-def process_spectra_and_plot(proteasome_db, mgf_folder, temp_folder, num_processes=15):
+def combine_pdfs_into_single_pdf(input_folder, output_file):
+    # Initialize PDF merger
+    pdf_merger = PyPDF2.PdfMerger()
+
+    # Get list of PDF files starting with 'temp_' in input_folder
+    pdf_files = [file for file in os.listdir(input_folder) if file.startswith('temp_') and file.lower().endswith('.pdf')]
+
+    # Sort PDF files to ensure they are combined in order
+    pdf_files.sort()
+
+    # Add each PDF file to the merger
+    for pdf_file in pdf_files:
+        pdf_merger.append(os.path.join(input_folder, pdf_file))
+
+    # Write merged PDF to output_file
+    with open(output_file, 'wb') as merged_pdf_file:
+        pdf_merger.write(merged_pdf_file)
+
+    print(f"Combined {len(pdf_files)} PDFs into {output_file}")
+
+
+
+
+def process_spectra_and_plot(proteasome_db, mgf_folder, output_file_path, num_processes=15):
     mgf_files = [f for f in os.listdir(mgf_folder) if f.endswith(".mgf")]
     pdf_filename = "spectra_plots.pdf"
 
@@ -367,13 +392,15 @@ def process_spectra_and_plot(proteasome_db, mgf_folder, temp_folder, num_process
 
     mgf_data = {}
     for mgf_file_name in mgf_files:
-        mgf_data[os.path.basename(mgf_file_name)]=extract_spectrum_for_mgf_file(os.path.join(mgf_folder, mgf_file_name), mgf_dict)
-
-    if not os.path.exists(temp_folder):
-        os.makedirs(temp_folder)
-    else:
-        shutil.rmtree(temp_folder)
-        os.makedirs(temp_folder)
+        mgf_file_path = os.path.join(mgf_folder, mgf_file_name)
+        if mgf_file_name in mgf_dict.keys():
+            mgf_data[os.path.basename(mgf_file_name)]=extract_spectrum_for_mgf_file(mgf_file_path, mgf_dict)
+        
+    # if not os.path.exists(temp_folder):
+    #     os.makedirs(temp_folder)
+    # else:
+    #     shutil.rmtree(temp_folder)
+    #     os.makedirs(temp_folder)
 
     # Assuming spectra_dict.keys() contains the list of peptides
     peptides = list(spectra_dict.keys())
@@ -381,11 +408,12 @@ def process_spectra_and_plot(proteasome_db, mgf_folder, temp_folder, num_process
     # Number of processes to use (adjust according to your system capabilities)
     # num_processes = multiprocessing.cpu_count()  # Use number of available CPU cores
     # num_processes=15
-
-    # Initialize a pool of processes
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        # Map the plotting function to each peptide using the pool
-        pool.starmap(plot_single_peptide, [(peptide, spectra_dict, mgf_data, pdf_filename, temp_folder) for peptide in peptides])
+    with tempfile.TemporaryDirectory() as temp_folder:
+        # Initialize a pool of processes
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            # Map the plotting function to each peptide using the pool
+            pool.starmap(plot_single_peptide, [(peptide, spectra_dict, mgf_data, pdf_filename, temp_folder) for peptide in peptides])
+        combine_pdfs_into_single_pdf(temp_folder, output_file_path)
 
     # print(f"Spectra plots saved as '{pdf_filename}'")
 
@@ -411,49 +439,26 @@ def process_proteasome_db(proteasome_db_path, sample_list_db_path):
   return proteasome_df
 
 
-def combine_pdfs_into_single_pdf(input_folder, output_file):
-    # Initialize PDF merger
-    pdf_merger = PyPDF2.PdfMerger()
-
-    # Get list of PDF files starting with 'temp_' in input_folder
-    pdf_files = [file for file in os.listdir(input_folder) if file.startswith('temp_') and file.lower().endswith('.pdf')]
-
-    # Sort PDF files to ensure they are combined in order
-    pdf_files.sort()
-
-    # Add each PDF file to the merger
-    for pdf_file in pdf_files:
-        pdf_merger.append(os.path.join(input_folder, pdf_file))
-
-    # Write merged PDF to output_file
-    with open(output_file, 'wb') as merged_pdf_file:
-        pdf_merger.write(merged_pdf_file)
-
-    print(f"Combined {len(pdf_files)} PDFs into {output_file}")
-
-    try:
-        shutil.rmtree(input_folder)
-        print(f"Folder '{input_folder}' deleted successfully.")
-    except OSError as e:
-        print(f"Error: {input_folder} : {e.strerror}")
-
 
 proteasome_db_path=snakemake.input.ProteasomeDB
 sample_list_db_path=snakemake.input.sample_list
-mgf_folder=snakemake.input.mgf_folder
+mgf_folder=snakemake.params.mgf_folder
 
-output_folder=snakemake.output.output_folder
-output_filename=snakemake.output.output_filename
+#output_folder=snakemake.output.output_folder
+#output_filename=snakemake.output.output_filename
+spectra_plot=snakemake.output.spectra_plot
 num_processes = 15 #[TODO:] take this from snakemake
 
 proteasome_db=process_proteasome_db(proteasome_db_path, sample_list_db_path)
 
-temp_folder = os.path.join(output_folder, 'temp')
+#temp_folder = os.path.join(output_folder, 'temp')
+#temp_folder = f'OUTPUT/{project_name}/temp'
 
-process_spectra_and_plot(proteasome_db, mgf_folder, temp_folder, num_processes)
+output_file_path = spectra_plot
 
-output_file_path=os.path.join(output_folder, output_filename)
+process_spectra_and_plot(proteasome_db, mgf_folder, output_file_path, num_processes)
 
 
-combine_pdfs_into_single_pdf(temp_folder, output_file_path)
+
+# combine_pdfs_into_single_pdf(temp_folder, output_file_path)
 
