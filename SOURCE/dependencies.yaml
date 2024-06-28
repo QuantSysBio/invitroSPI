@@ -11,3 +11,11 @@ dependencies:
   - r-dplyr=1.0.7
   - r-ggplot2=3.3.5
   - r-gridextra=2.3
+  - python=3.12.2
+  - pandas=2.2.2
+  - matplotlib=3.8.4
+  - numpy=1.26.4
+  - libmamba=1.5.8
+  - pip
+  - pip:
+    - pypdf2

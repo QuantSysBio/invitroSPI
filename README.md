@@ -7,14 +7,15 @@ Please cite the following publication if you are using invitroSPI for your resea
 > Roetschke, H.P., Rodriguez-Hernandez, G., Cormican, J.A. et al. InvitroSPI and a large database of proteasome-generated spliced and non-spliced peptides. Sci Data 10, 18 (2023). https://doi.org/10.1038/s41597-022-01890-6
 
 ## overview
-The invitroSPI pipeline consists of four main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
+The invitroSPI pipeline consists of six main steps that are implemented in a [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow:
 1. parsing of search result files and creation of a preliminary MS database (*MSDB*) containing all peptide-spectrum matches (PSMs), mapping of peptides to their substrate origins and potential product type re-assignment
 2. scoring and filtering of PSMs using Mascot's ion score and q-value as well as the delta score described in the manuscript
 3. identification and, optionally, removal of synthesis errors using the control runs
 4. mapping of peptides to the substrate sequence accounting for potential multi-mappers
 5. database statistics and diagnostic information
+6. MS2 spectra plotting with annotation of peptide fragment ions.
 
-Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/_generateSearchDB_polypeptides.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`).
+Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/_generateSearchDB_polypeptides.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`). 
 
 ## execution
 invitroSPI relies on [Conda](https://docs.conda.io/en/latest/) and Snakemake.
@@ -47,6 +48,7 @@ invitroSPI identifies spliced and non-spliced peptides from Mascot search result
 - replicate
 - MSfile (optional)
 - metainformation (optional)
+- folder with .mgf files 
 
 !!!
 In case you are creating/editing the `sample_list.csv` file in Microsoft Excel, make sure to save it as actual comma-separated file. I.e., `Save as...`
@@ -74,12 +76,14 @@ In case you would like to include additional information in the final database (
 The invitroSPI workflow is constructed in such a way that the user can keep appending projects and search result files to the `sample_list`. However, only the samples of the current project (which is specified in `INPUT/config.yaml`) are processed and stored separately in `OUTPUT/project_name` subdirectories.
 
 ## output
-The pipeline provides a final database of identified spliced and non-spliced peptides in .csv format (`OUTPUT/project_name/ProteasomeDB.csv`) as well as all intermediate files in binary format (`OUTPUT/project_name/tmp/`).
+The pipeline provides a final database of identified spliced and non-spliced peptides in .csv format (`OUTPUT/project_name/ProteasomeDB.csv`),  as well as all intermediate files in binary format(`OUTPUT/project_name/tmp/`).
 
-Additionally, some diagnostic plots and database statistics are being produced which can also be found in the `OUTPUT/` folder. They comprise:
+Additionally, some diagnostic plots, and database statistics are being produced which can also be found in the `OUTPUT/` folder. They comprise:
 - number of unique peptides
 - number and frequencies of peptides and PSMs at each time point
-- length distribution of peptides, splice reactants and intervening sequences at each time point
+- length distribution of peptides, splice reactants, and intervening sequences at each time point
+- MS2 spectra plots in .pdf format
+
 
 ## parameters that can be modified by the user
 We are using the following default parameters that are specified in the `INPUT/config.yaml` file and that can be changed by the user:
@@ -89,6 +93,7 @@ We are using the following default parameters that are specified in the `INPUT/c
 - `q_value`: 0.05
 - `include_scanNum`: "yes"
 - `keep_synErrors`: "no"
+- `mgf_folder` : "absolute_path_to_your_mgf_folder"
 
 Processing of scan numbers is only possible if .mgf files were created with **msconvert or Mascot Distiller**. In case you provide search results in another format (not recommended), please set `include_scanNum` to "no".
 In case you would like to include synthesis errors (labelled as such) in the final *ProteasomeDB*, change the `keep_synErrors` flag accordingly.
