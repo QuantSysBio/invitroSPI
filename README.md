@@ -13,7 +13,7 @@ The invitroSPI pipeline consists of six main steps that are implemented in a [Sn
 3. identification and, optionally, removal of synthesis errors using the control runs
 4. mapping of peptides to the substrate sequence accounting for potential multi-mappers
 5. database statistics and diagnostic information
-6. MS2 spectra plotting with annotation of peptide fragment ions .
+6. MS2 spectra plotting with annotation of peptide fragment ions.
 
 Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/_generateSearchDB_polypeptides.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`).
 
@@ -92,7 +92,7 @@ We are using the following default parameters that are specified in the `INPUT/c
 - `q_value`: 0.05
 - `include_scanNum`: "yes"
 - `keep_synErrors`: "no"
-- `mgf_folder` : "path_to_the_mgf_folder"
+- `mgf_folder` : "path_to_mgf_folder"
 
 Processing of scan numbers is only possible if .mgf files were created with **msconvert or Mascot Distiller**. In case you provide search results in another format (not recommended), please set `include_scanNum` to "no".
 In case you would like to include synthesis errors (labelled as such) in the final *ProteasomeDB*, change the `keep_synErrors` flag accordingly.
