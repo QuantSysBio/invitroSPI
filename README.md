@@ -76,12 +76,13 @@ In case you would like to include additional information in the final database (
 The invitroSPI workflow is constructed in such a way that the user can keep appending projects and search result files to the `sample_list`. However, only the samples of the current project (which is specified in `INPUT/config.yaml`) are processed and stored separately in `OUTPUT/project_name` subdirectories.
 
 ## output
-The pipeline provides a final database of identified spliced and non-spliced peptides in .csv format (`OUTPUT/project_name/ProteasomeDB.csv`) , MS2 spectra plots in .pdf format(`OUTPUT/project_name/ms2_spectra.pdf`) as well as all intermediate files in binary format(`OUTPUT/project_name/tmp/`).
+The pipeline provides a final database of identified spliced and non-spliced peptides in .csv format (`OUTPUT/project_name/ProteasomeDB.csv`),  as well as all intermediate files in binary format(`OUTPUT/project_name/tmp/`).
 
-Additionally, some diagnostic plots , database statistics are being produced which can also be found in the `OUTPUT/` folder. They comprise:
+Additionally, some diagnostic plots, and database statistics are being produced which can also be found in the `OUTPUT/` folder. They comprise:
 - number of unique peptides
 - number and frequencies of peptides and PSMs at each time point
-- length distribution of peptides, splice reactants and intervening sequences at each time point
+- length distribution of peptides, splice reactants, and intervening sequences at each time point
+- MS2 spectra plots in .pdf format
 
 
 ## parameters that can be modified by the user
@@ -92,7 +93,7 @@ We are using the following default parameters that are specified in the `INPUT/c
 - `q_value`: 0.05
 - `include_scanNum`: "yes"
 - `keep_synErrors`: "no"
-- `mgf_folder` : "path_to_your_mgf_folder"
+- `mgf_folder` : "absolute_path_to_your_mgf_folder"
 
 Processing of scan numbers is only possible if .mgf files were created with **msconvert or Mascot Distiller**. In case you provide search results in another format (not recommended), please set `include_scanNum` to "no".
 In case you would like to include synthesis errors (labelled as such) in the final *ProteasomeDB*, change the `keep_synErrors` flag accordingly.
