@@ -206,7 +206,7 @@ def extract_spectrum_for_mgf_file(mgf_file_path, mgf_dict):
 
 
 def plot_matched_ions(peptide, scan_number, mgf_file_path, mz_values, intensities, charge, ax2):
-    ax1 = ax2.inset_axes([0, 0.75, 1, 0.25])  # Top 25% for peptide fragment pattern
+    ax1 = ax2.inset_axes([0, 0.80, 1, 0.20])  # Top 25% for peptide fragment pattern
 
     modifications = None
     ion_data, _ = get_ion_masses(peptide, KNOWN_PTM_WEIGHTS, modifications)
@@ -263,6 +263,9 @@ def plot_matched_ions(peptide, scan_number, mgf_file_path, mz_values, intensitie
     ax1.spines['left'].set_color('none')
     ax1.spines['bottom'].set_color('none')
 
+    max_intensity = max(intensities)
+    ax2.set_ylim(0, max_intensity * 1.4)  
+
     ax2.stem(mz_values, intensities, linefmt="k-", markerfmt=" ", basefmt="k-")
 
     for b_ion in matched_b_ions:
@@ -271,7 +274,7 @@ def plot_matched_ions(peptide, scan_number, mgf_file_path, mz_values, intensitie
                      (b_ion[4], b_ion[5]),
                      textcoords="offset points",
                      xytext=(0, 2 + b_ion[0] * 1),
-                     ha='center', color='blue', fontsize=8)
+                     ha='center', color='blue', fontsize=8 , clip_on=False)
 
     for y_ion in matched_y_ions:
         ax2.stem([y_ion[4]], [y_ion[5]], linefmt="r-", markerfmt=" ", basefmt="r-")
@@ -279,7 +282,7 @@ def plot_matched_ions(peptide, scan_number, mgf_file_path, mz_values, intensitie
                      (y_ion[4], y_ion[5]),
                      textcoords="offset points",
                      xytext=(0, 0 + y_ion[0] * 1),
-                     ha='center', color='red', fontsize=8)
+                     ha='center', color='red', fontsize=8 , clip_on=False)
 
     ax2.set_xlabel('m/z', fontsize=12)
     ax2.set_ylabel('Intensity', fontsize=12)
@@ -332,7 +335,7 @@ def plot_single_peptide(peptide, spectra_dict, mgf_data, pdf_filename, temp_fold
             num_pages = (num_plots + 1) // 2
             for page in range(num_pages):
                 fig, axs = plt.subplots(2, 1, figsize=(16, 10))
-                fig.subplots_adjust(hspace=0.5)
+                fig.subplots_adjust(hspace=0.8)
 
                 for i in range(2):
                     plot_index = page * 2 + i
@@ -378,7 +381,9 @@ def combine_pdfs_into_single_pdf(input_folder, output_file):
 
 
 
-def process_spectra_and_plot(proteasome_db, mgf_folder, output_file_path, num_processes=15):
+
+
+def process_spectra_and_plot(proteasome_db, mgf_folder, output_file_path, num_processes):
     mgf_files = [f for f in os.listdir(mgf_folder) if f.endswith(".mgf")]
     pdf_filename = "spectra_plots.pdf"
 
@@ -396,18 +401,13 @@ def process_spectra_and_plot(proteasome_db, mgf_folder, output_file_path, num_pr
         if mgf_file_name in mgf_dict.keys():
             mgf_data[os.path.basename(mgf_file_name)]=extract_spectrum_for_mgf_file(mgf_file_path, mgf_dict)
         
-    # if not os.path.exists(temp_folder):
-    #     os.makedirs(temp_folder)
-    # else:
-    #     shutil.rmtree(temp_folder)
-    #     os.makedirs(temp_folder)
+    
 
     # Assuming spectra_dict.keys() contains the list of peptides
     peptides = list(spectra_dict.keys())
 
     # Number of processes to use (adjust according to your system capabilities)
-    # num_processes = multiprocessing.cpu_count()  # Use number of available CPU cores
-    # num_processes=15
+    
     with tempfile.TemporaryDirectory() as temp_folder:
         # Initialize a pool of processes
         with multiprocessing.Pool(processes=num_processes) as pool:
@@ -444,15 +444,13 @@ proteasome_db_path=snakemake.input.ProteasomeDB
 sample_list_db_path=snakemake.input.sample_list
 mgf_folder=snakemake.params.mgf_folder
 
-#output_folder=snakemake.output.output_folder
-#output_filename=snakemake.output.output_filename
 spectra_plot=snakemake.output.spectra_plot
-num_processes = 15 #[TODO:] take this from snakemake
 
+
+num_processes = min(15 , os.cpu_count() // 2)
 proteasome_db=process_proteasome_db(proteasome_db_path, sample_list_db_path)
 
-#temp_folder = os.path.join(output_folder, 'temp')
-#temp_folder = f'OUTPUT/{project_name}/temp'
+
 
 output_file_path = spectra_plot
 
@@ -460,5 +458,5 @@ process_spectra_and_plot(proteasome_db, mgf_folder, output_file_path, num_proces
 
 
 
-# combine_pdfs_into_single_pdf(temp_folder, output_file_path)
+
 
