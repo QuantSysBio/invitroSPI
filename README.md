@@ -15,7 +15,7 @@ The invitroSPI pipeline consists of six main steps that are implemented in a [Sn
 5. database statistics and diagnostic information
 6. MS2 spectra plotting with annotation of peptide fragment ions.
 
-Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/_generateSearchDB_polypeptides.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`).
+Additionally, code for the computation of all possible spliced and non-spliced peptides which is used for the Mascot search is provided in `SOURCE/_generateSearchDB_polypeptides.R`. We also include a script containing useful functions for downstream analyses (`invitroSPI_utils.R`). The script used for MS2 spectra plotting is included in `SOURCE/plot_spectra.py`
 
 ## execution
 invitroSPI relies on [Conda](https://docs.conda.io/en/latest/) and Snakemake.
