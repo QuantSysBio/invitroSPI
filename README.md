@@ -92,7 +92,7 @@ We are using the following default parameters that are specified in the `INPUT/c
 - `q_value`: 0.05
 - `include_scanNum`: "yes"
 - `keep_synErrors`: "no"
-- `mgf_folder` : "path_to_mgf_folder"
+- `mgf_folder` : "path_to_your_mgf_folder"
 
 Processing of scan numbers is only possible if .mgf files were created with **msconvert or Mascot Distiller**. In case you provide search results in another format (not recommended), please set `include_scanNum` to "no".
 In case you would like to include synthesis errors (labelled as such) in the final *ProteasomeDB*, change the `keep_synErrors` flag accordingly.
